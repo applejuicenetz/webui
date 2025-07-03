@@ -1,179 +1,310 @@
-# CoreUI Free Vue Admin Template [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&logo=twitter)](https://twitter.com/intent/tweet?text=CoreUI%20-%20Free%Vue%204%20Admin%20Template%20&url=https://coreui.io&hashtags=bootstrap,admin,template,dashboard,panel,free,angular,react,vue)
+# AppleJuice Nexus 🍎
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![@coreui coreui](https://img.shields.io/badge/@coreui%20-coreui-lightgrey.svg?style=flat-square)](https://github.com/coreui/coreui)
-[![npm package][npm-coreui-badge]][npm-coreui]
-[![NPM downloads][npm-coreui-download]][npm-coreui]
-[![@coreui vue](https://img.shields.io/badge/@coreui%20-vue-lightgrey.svg?style=flat-square)](https://github.com/coreui/vue)
-[![npm package][npm-coreui-vue-badge]][npm-coreui-vue]
-[![NPM downloads][npm-coreui-vue-download]][npm-coreui-vue]  
+[![Vue 3](https://img.shields.io/badge/Vue-3-brightgreen.svg?style=flat-square)](https://vuejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg?style=flat-square)](https://nodejs.org/)
 
-[npm-coreui]: https://www.npmjs.com/package/@coreui/coreui
-[npm-coreui-badge]: https://img.shields.io/npm/v/@coreui/coreui.png?style=flat-square
-[npm-coreui-download]: https://img.shields.io/npm/dm/@coreui/coreui.svg?style=flat-square
-[npm-coreui-vue]: https://www.npmjs.com/package/@coreui/vue
-[npm-coreui-vue-badge]: https://img.shields.io/npm/v/@coreui/vue.png?style=flat-square
-[npm-coreui-vue-download]: https://img.shields.io/npm/dm/@coreui/vue.svg?style=flat-square
-[npm]: https://www.npmjs.com/package/@coreui/vue
+**Die moderne WebUI für AppleJuice Core** - Eine benutzerfreundliche Weboberfläche für das AppleJuice P2P-Netzwerk.
 
-[![Bootstrap Admin Template](https://assets.coreui.io/products/coreui-free-bootstrap-admin-template-light-dark.webp)](https://coreui.io/product/free-react-admin-template/)
+AppleJuice Nexus ist eine moderne, responsive Web-Anwendung, die als grafische Benutzeroberfläche für AppleJuice Core dient. Sie ermöglicht es Benutzern, ihre AppleJuice-Instanz über einen Webbrowser zu verwalten und zu überwachen.
 
-CoreUI is meant to be the UX game changer. Pure & transparent code is devoid of redundant components, so the app is light enough to offer ultimate user experience. This means mobile devices also, where the navigation is just as easy and intuitive as on a desktop or laptop. The CoreUI Layout API lets you customize your project for almost any device – be it Mobile, Web or WebApp – CoreUI covers them all!
+## ✨ Features
 
-## Table of Contents
+- 🎨 **Moderne UI**: Basiert auf Vue 3 und CoreUI für eine benutzerfreundliche Erfahrung
+- 📱 **Responsive Design**: Funktioniert auf Desktop, Tablet und Mobilgeräten
+- 🔄 **Real-time Updates**: Live-Aktualisierung der Daten
+- 🔧 **Konfigurierbar**: Einfache Konfiguration von AppleJuice Core Verbindungen
+- 🌐 **Multi-Language**: Unterstützung für mehrere Sprachen (geplant)
+- 🔒 **Sicher**: Sichere Verbindung zu AppleJuice Core
+- 🐳 **Docker Support**: Containerisierung für einfache Bereitstellung
 
-* [Versions](#versions)
-* [CoreUI PRO](#coreui-pro)
-* [CoreUI PRO Vue Admin Templates](#coreui-pro-vue-admin-templates)
-* [Quick Start](#quick-start)
+## 📋 Inhaltsverzeichnis
+
+* [Voraussetzungen](#voraussetzungen)
 * [Installation](#installation)
-* [Basic usage](#basic-usage)
-* [What's included](#whats-included)
-* [Documentation](#documentation)
-* [Versioning](#versioning)
-* [Creators](#creators)
-* [Community](#community)
-* [Support CoreUI Development](#support-coreui-development)
-* [Copyright and License](#copyright-and-license)
+* [Konfiguration](#konfiguration)
+* [Entwicklung](#entwicklung)
+* [Production](#production)
+* [Docker](#docker)
+* [API Endpoints](#api-endpoints)
+* [Troubleshooting](#troubleshooting)
+* [Mitwirken](#mitwirken)
+* [Lizenz](#lizenz)
 
-## Versions
+## 📋 Voraussetzungen
 
-* [CoreUI Free Bootstrap Admin Template](https://github.com/coreui/coreui-free-bootstrap-admin-template)
-* [CoreUI Free Angular Admin Template](https://github.com/coreui/coreui-free-angular-admin-template)
-* [CoreUI Free React.js Admin Template](https://github.com/coreui/coreui-free-react-admin-template)
-* [CoreUI Free Vue.js Admin Template](https://github.com/coreui/coreui-free-vue-admin-template)
+- **Node.js** >= 18.0.0
+- **npm** >= 8.0.0 oder **yarn** >= 1.22.0
+- **AppleJuice Core** (laufende Instanz)
 
-## CoreUI PRO
+## 🚀 Installation
 
-* 💪  [CoreUI PRO Angular Admin Template](https://coreui.io/product/angular-dashboard-template/)
-* 💪  [CoreUI PRO Bootstrap Admin Template](https://coreui.io/product/bootstrap-dashboard-template/)
-* 💪  [CoreUI PRO Next.js Admin Template](https://coreui.io/product/next-js-dashboard-template/)
-* 💪  [CoreUI PRO React Admin Template](https://coreui.io/product/react-dashboard-template/)
-* 💪  [CoreUI PRO Vue Admin Template](https://coreui.io/product/vue-dashboard-template/)
+1. **Repository klonen:**
+   ```bash
+   git clone https://github.com/your-username/aj-nexus.git
+   cd aj-nexus
+   ```
 
-## CoreUI PRO Vue Admin Templates
+2. **Dependencies installieren:**
+   ```bash
+   npm install
+   ```
+   oder
+   ```bash
+   yarn install
+   ```
 
-| Default Theme | Light Theme |
-| --- | --- |
-| [![CoreUI PRO Vue Admin Template](https://coreui.io/images/templates/coreui_pro_default_light_dark.webp)](https://coreui.io/product/vue-dashboard-template/?theme=default) | [![CoreUI PRO Vue Admin Template](https://coreui.io/images/templates/coreui_pro_light_light_dark.webp)](https://coreui.io/product/vue-dashboard-template/?theme=light)|
+## ⚙️ Konfiguration
 
-| Modern Theme | Bright Theme |
-| --- | --- |
-| [![CoreUI PRO Vue Admin Template](https://coreui.io/images/templates/coreui_pro_default_v3_light_dark.webp)](https://coreui.io/product/vue-dashboard-template/?theme=modern) | [![CoreUI PRO Vue Admin Template](https://coreui.io/images/templates/coreui_pro_light_v3_light_dark.webp)](https://coreui.io/product/vue-dashboard-template/?theme=bright)|
+### Umgebungsvariablen
 
-## Quick Start
+Erstellen Sie eine `.env` Datei im Projektverzeichnis:
 
-- [Download the latest release](https://github.com/coreui/coreui-free-vue-admin-template/archive/refs/heads/main.zip)
-- Clone the repo: `git clone https://github.com/coreui/coreui-free-vue-admin-template.git`
+```env
+# AppleJuice Core Verbindung
+APPLEJUICE_CORE_HOST=192.168.1.100
+APPLEJUICE_CORE_PORT=9851
 
-### Instalation
+# Server Port
+PORT=3000
 
-``` bash
-$ npm install
+# Produktionsumgebung
+NODE_ENV=development
 ```
 
-or
+### Standard-Konfiguration
 
-``` bash
-$ yarn install
-```
+- **Core Host**: `192.168.1.200`
+- **Core Port**: `9851`
+- **Server Port**: `3000`
 
-### Basic usage
+## 🛠️ Entwicklung
 
-``` bash
-# dev server with hot reload at http://localhost:3000
-$ npm run dev
-```
-
-or 
-
-``` bash
-# dev server with hot reload at http://localhost:3000
-$ yarn dev
-```
-
-Navigate to [http://localhost:3000](http://localhost:3000). The app will automatically reload if you change any of the source files.
-
-#### Build
-
-Run `build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### Development Server starten
 
 ```bash
-# build for production with minification
-$ npm run build
+# Dev Server mit Hot Reload
+npm run dev
 ```
 
-or
+Die Anwendung ist dann unter [http://localhost:3000](http://localhost:3000) erreichbar.
+
+### Build für Production
 
 ```bash
-# build for production with minification
-$ yarn build
+# Build für Production
+npm run build
 ```
 
-## What's included
+Die Build-Artefakte werden im `dist/` Verzeichnis gespeichert.
 
-Within the download you'll find the following directories and files, logically grouping common assets and providing both compiled and minified variations. You'll see something like this:
+### Linting
 
-```
-coreui-free-vue-admin-template
-├── public/          # static files
-├── src/             # project root
-│   ├── assets/      # images, icons, etc.
-│   ├── components/  # common components - header, footer, sidebar, etc.
-│   ├── layouts/     # layout containers
-│   ├── scss/        # scss styles
-│   ├── router       # routes config
-│   ├── stores/      # template state example 
-│   ├── views/       # application views
-│   ├── _nav.js      # sidebar navigation config
-│   ├── App.vue
-│   ├── ...
-│   └── main.js
-├── index.html   # html template
-├── package.json
-└── vite.config.mjs
+```bash
+# Code-Qualität überprüfen
+npm run lint
 ```
 
-## Documentation
+## 🌐 Production
 
-The documentation for the CoreUI Admin Template is hosted at our website [CoreUI for Vue](https://coreui.io/vue/docs/templates/installation.html)
+### Produktionsserver starten
 
-## Versioning
+```bash
+# Production Server
+npm start
+```
 
-For transparency into our release cycle and in striving to maintain backward compatibility, CoreUI Free Admin Template is maintained under [the Semantic Versioning guidelines](http://semver.org/).
+oder
 
-See [the Releases section of our project](https://github.com/coreui/coreui-free-vue-admin-template/releases) for changelogs for each release version.
+```bash
+# Mit Environment-Variablen
+NODE_ENV=production npm start
+```
 
-## Creators
+### PM2 (empfohlen für Production)
 
-**Łukasz Holeczek**
+```bash
+# PM2 installieren
+npm install -g pm2
 
-* <https://twitter.com/lukaszholeczek>
-* <https://github.com/mrholek>
+# Anwendung starten
+pm2 start server.js --name "aj-nexus"
 
-**Andrzej Kopański**
+# Status überprüfen
+pm2 status
 
-* <https://github.com/xidedix>
+# Logs anzeigen
+pm2 logs aj-nexus
+```
 
-**CoreUI Team**
+## 🐳 Docker
 
-* <https://twitter.com/core_ui>
-* <https://github.com/coreui>
-* <https://github.com/orgs/coreui/people>
+### Docker Build
 
-## Community
+```bash
+# Docker Image erstellen
+docker build -t aj-nexus .
+```
 
-Get updates on CoreUI's development and chat with the project maintainers and community members.
+### Docker Run
 
-- Follow [@core_ui on Twitter](https://twitter.com/core_ui).
-- Read and subscribe to [CoreUI Blog](https://coreui.io/blog/).
+```bash
+# Container starten
+docker run -d \
+  --name aj-nexus \
+  -p 3000:3000 \
+  -e APPLEJUICE_CORE_HOST=192.168.1.100 \
+  -e APPLEJUICE_CORE_PORT=9851 \
+  aj-nexus
+```
 
-## Support CoreUI Development
+### Docker Compose
 
-CoreUI is an MIT-licensed open source project and is completely free to use. However, the amount of effort needed to maintain and develop new features for the project is not sustainable without proper financial backing. You can support development by buying the [CoreUI PRO](https://coreui.io/pricing/?framework=vue&src=github-coreui-free-vue-admin-template) or by becoming a sponsor via [Open Collective](https://opencollective.com/coreui/).
+```yaml
+version: '3.8'
+services:
+  aj-nexus:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - APPLEJUICE_CORE_HOST=192.168.1.100
+      - APPLEJUICE_CORE_PORT=9851
+      - NODE_ENV=production
+    restart: unless-stopped
+```
 
-## Copyright and License
+## 📁 Projektstruktur
 
-copyright 2025 creativeLabs Łukasz Holeczek.   
+```
+aj-nexus/
+├── public/              # Statische Dateien
+├── src/                 # Quellcode
+│   ├── assets/          # Bilder, Icons, etc.
+│   ├── components/      # Vue-Komponenten
+│   ├── layouts/         # Layout-Container
+│   ├── router/          # Router-Konfiguration
+│   ├── stores/          # Pinia Stores
+│   ├── styles/          # SCSS-Styles
+│   ├── utils/           # Hilfsfunktionen
+│   ├── views/           # Seiten-Komponenten
+│   ├── _nav.js          # Sidebar-Navigation
+│   ├── App.vue          # Haupt-App-Komponente
+│   └── main.js          # Einsprungspunkt
+├── server.js            # Express-Server
+├── Dockerfile           # Docker-Konfiguration
+├── package.json         # Abhängigkeiten
+└── vite.config.mjs      # Vite-Konfiguration
+```
 
-Code released under [the MIT license](https://github.com/coreui/coreui-free-react-admin-template/blob/main/LICENSE).
+## 🔌 API Endpoints
+
+### Server-Endpunkte
+
+- **GET** `/status` - Server-Status abfragen
+- **GET** `/config` - Aktuelle Konfiguration abrufen
+- **POST** `/config` - Konfiguration ändern
+
+### Proxy-Endpunkte
+
+- **GET** `/api/*` - Proxy zu AppleJuice Core
+- Alle API-Requests werden automatisch an AppleJuice Core weitergeleitet
+
+### Beispiel-Requests
+
+```bash
+# Server-Status
+curl http://localhost:3000/status
+
+# Konfiguration abrufen
+curl http://localhost:3000/config
+
+# Konfiguration ändern
+curl -X POST http://localhost:3000/config \
+  -H "Content-Type: application/json" \
+  -d '{"coreHost": "192.168.1.100", "corePort": "9851"}'
+
+# AppleJuice Core API (über Proxy)
+curl http://localhost:3000/api/info
+```
+
+## 🔧 Troubleshooting
+
+### Häufige Probleme
+
+#### Verbindung zu AppleJuice Core fehlgeschlagen
+
+```bash
+# Prüfen ob AppleJuice Core erreichbar ist
+curl http://192.168.1.100:9851/
+
+# Firewall-Einstellungen prüfen
+# Core-Host und Port in .env korrigieren
+```
+
+#### Port bereits in Verwendung
+
+```bash
+# Anderen Port verwenden
+PORT=3001 npm start
+
+# Oder in .env Datei
+echo "PORT=3001" >> .env
+```
+
+#### Build-Fehler
+
+```bash
+# Node-Modules neu installieren
+rm -rf node_modules package-lock.json
+npm install
+
+# Cache löschen
+npm cache clean --force
+```
+
+### Logs
+
+```bash
+# Development
+npm run dev
+
+# Production
+npm start
+
+# Docker
+docker logs aj-nexus
+```
+
+## 🤝 Mitwirken
+
+Beiträge sind willkommen! Bitte lesen Sie die [Contribution Guidelines](CONTRIBUTING.md) für Details.
+
+### Development Setup
+
+1. Repository forken
+2. Feature-Branch erstellen: `git checkout -b feature/amazing-feature`
+3. Änderungen committen: `git commit -m 'Add amazing feature'`
+4. Branch pushen: `git push origin feature/amazing-feature`
+5. Pull Request erstellen
+
+### Code Style
+
+- ESLint-Regeln befolgen
+- Prettier für Code-Formatierung
+- Vue 3 Composition API verwenden
+- TypeScript für neue Features (geplant)
+
+## 📄 Lizenz
+
+Dieses Projekt ist unter der MIT-Lizenz lizenziert. Siehe [LICENSE](LICENSE) für Details.
+
+## 🙏 Danksagungen
+
+- [CoreUI](https://coreui.io/) für das fantastische Admin-Template
+- [Vue.js](https://vuejs.org/) für das reaktive Framework
+- [AppleJuice Community](https://applejuicenet.de/) für die Unterstützung
+
+---
+
+**AppleJuice Nexus** - Moderne Web-UI für das AppleJuice P2P-Netzwerk 🍎
