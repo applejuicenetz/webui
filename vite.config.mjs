@@ -34,8 +34,31 @@ export default defineConfig(() => {
     },
     server: {
       port: 3000,
+      cors: true,
       proxy: {
-        // https://vitejs.dev/config/server-options.html
+        // Proxy AppleJuice Core API requests to avoid CORS issues
+        '/api': {
+          target: 'http://192.168.178.222:9854',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+          configure: (proxy, options) => {
+            proxy.on('error', (err, req, res) => {
+              console.log('Proxy error:', err);
+            });
+            proxy.on('proxyReq', (proxyReq, req, res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+              // Allow dynamic target based on headers
+              const targetHost = req.headers['x-target-host'];
+              const targetPort = req.headers['x-target-port'];
+              if (targetHost && targetPort) {
+                options.target = `http://${targetHost}:${targetPort}`;
+              }
+            });
+            proxy.on('proxyRes', (proxyRes, req, res) => {
+              console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+            });
+          }
+        }
       },
     },
   }

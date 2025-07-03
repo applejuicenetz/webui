@@ -38,19 +38,24 @@ export const useAuthStore = defineStore('auth', () => {
   const checkConnection = async (url, portNum, pass) => {
     isLoading.value = true
     connectionError.value = ''
-    
+
     try {
       // Passwort hashen bevor es verwendet wird
       const hashedPassword = ensureHashedPassword(pass)
-      const fullUrl = `http://${url}:${portNum}/settings.xml?password=${hashedPassword}`
-      
+
+      // Always use proxy endpoint - server handles the proxy
+      const fullUrl = `/api/settings.xml?password=${hashedPassword}`
+
+      // Prepare headers
+      const headers = {
+        'Accept': 'application/xml, text/xml, */*',
+        'Cache-Control': 'no-cache'
+      }
+
       // Verbindung testen
       const response = await fetch(fullUrl, {
         method: 'GET',
-        headers: {
-          'Accept': 'application/xml, text/xml, */*',
-          'Cache-Control': 'no-cache'
-        },
+        headers,
         // Timeout aus Konfiguration
         signal: AbortSignal.timeout(config.core.timeout)
       })
@@ -62,7 +67,7 @@ export const useAuthStore = defineStore('auth', () => {
       // Prüfen ob es wirklich eine XML-Datei ist
       const contentType = response.headers.get('content-type')
       const responseText = await response.text()
-      
+
       if (!responseText || responseText.trim() === '') {
         throw new Error('Leere Antwort vom Server')
       }
@@ -77,15 +82,15 @@ export const useAuthStore = defineStore('auth', () => {
       port.value = portNum
       password.value = hashedPassword
       isAuthenticated.value = true
-      
+
       // In localStorage persistieren
       saveToLocalStorage()
-      
+
       return true
 
     } catch (error) {
       console.error('Verbindungsfehler:', error)
-      
+
       if (error.name === 'TimeoutError') {
         connectionError.value = 'Verbindung ist zu langsam (Timeout nach 10s)'
       } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
@@ -95,7 +100,7 @@ export const useAuthStore = defineStore('auth', () => {
       } else {
         connectionError.value = 'Keine Verbindung hergestellt. Bitte überprüfen Sie Ihre Eingaben.'
       }
-      
+
       throw error
     } finally {
       isLoading.value = false
@@ -104,7 +109,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const login = async (loginData) => {
     const { coreUrl: url, port: portNum, password: pass } = loginData
-    
+
     if (!url || !portNum || !pass) {
       connectionError.value = 'Bitte füllen Sie alle Felder aus.'
       return false
@@ -124,7 +129,7 @@ export const useAuthStore = defineStore('auth', () => {
     port.value = ''
     password.value = ''
     connectionError.value = ''
-    
+
     // Aus localStorage entfernen
     localStorage.removeItem(config.app.storageKey)
   }
@@ -137,7 +142,7 @@ export const useAuthStore = defineStore('auth', () => {
       password: password.value,
       timestamp: Date.now()
     }
-    
+
     localStorage.setItem(config.app.storageKey, JSON.stringify(authData))
   }
 
@@ -147,7 +152,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (!stored) return false
 
       const authData = JSON.parse(stored)
-      
+
       // Prüfen ob die Daten nicht älter als 24 Stunden sind
       const isExpired = Date.now() - authData.timestamp > 24 * 60 * 60 * 1000
       if (isExpired) {
@@ -160,7 +165,7 @@ export const useAuthStore = defineStore('auth', () => {
       coreUrl.value = authData.coreUrl || ''
       port.value = authData.port || ''
       password.value = authData.password || ''
-      
+
       return true
     } catch (error) {
       console.error('Fehler beim Laden der gespeicherten Auth-Daten:', error)
@@ -195,11 +200,11 @@ export const useAuthStore = defineStore('auth', () => {
     password,
     connectionError,
     isLoading,
-    
+
     // Getters
     getConnectionUrl,
     getFullUrl,
-    
+
     // Actions
     login,
     logout,
