@@ -1,21 +1,21 @@
-# AppleJuice Nexus 🍎
+# appleJuice WebUI 🍎
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Vue 3](https://img.shields.io/badge/Vue-3-brightgreen.svg?style=flat-square)](https://vuejs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg?style=flat-square)](https://nodejs.org/)
 
-**Die moderne WebUI für AppleJuice Core** - Eine benutzerfreundliche Weboberfläche für das AppleJuice P2P-Netzwerk.
+**Die moderne WebUI für appleJuice Core** - Eine benutzerfreundliche Weboberfläche für das appleJuice P2P-Netzwerk.
 
-AppleJuice Nexus ist eine moderne, responsive Web-Anwendung, die als grafische Benutzeroberfläche für AppleJuice Core dient. Sie ermöglicht es Benutzern, ihre AppleJuice-Instanz über einen Webbrowser zu verwalten und zu überwachen.
+appleJuice Nexus ist eine moderne, responsive Web-Anwendung, die als grafische Benutzeroberfläche für appleJuice Core dient. Sie ermöglicht es Benutzern, ihre appleJuice-Instanz über einen Webbrowser zu verwalten und zu überwachen.
 
 ## ✨ Features
 
 - 🎨 **Moderne UI**: Basiert auf Vue 3 und CoreUI für eine benutzerfreundliche Erfahrung
 - 📱 **Responsive Design**: Funktioniert auf Desktop, Tablet und Mobilgeräten
 - 🔄 **Real-time Updates**: Live-Aktualisierung der Daten
-- 🔧 **Konfigurierbar**: Einfache Konfiguration von AppleJuice Core Verbindungen
+- 🔧 **Konfigurierbar**: Einfache Konfiguration von appleJuice Core Verbindungen
 - 🌐 **Multi-Language**: Unterstützung für mehrere Sprachen (geplant)
-- 🔒 **Sicher**: Sichere Verbindung zu AppleJuice Core
+- 🔒 **Sicher**: Sichere Verbindung zu appleJuice Core
 - 🐳 **Docker Support**: Containerisierung für einfache Bereitstellung
 
 ## 📋 Inhaltsverzeichnis
@@ -35,7 +35,7 @@ AppleJuice Nexus ist eine moderne, responsive Web-Anwendung, die als grafische B
 
 - **Node.js** >= 18.0.0
 - **npm** >= 8.0.0 oder **yarn** >= 1.22.0
-- **AppleJuice Core** (laufende Instanz)
+- **appleJuice Core** (laufende Instanz)
 
 ## 🚀 Installation
 
@@ -61,7 +61,7 @@ AppleJuice Nexus ist eine moderne, responsive Web-Anwendung, die als grafische B
 Erstellen Sie eine `.env` Datei im Projektverzeichnis:
 
 ```env
-# AppleJuice Core Verbindung
+# appleJuice Core Verbindung
 APPLEJUICE_CORE_HOST=192.168.1.100
 APPLEJUICE_CORE_PORT=9851
 
@@ -207,8 +207,8 @@ aj-nexus/
 
 ### Proxy-Endpunkte
 
-- **GET** `/api/*` - Proxy zu AppleJuice Core
-- Alle API-Requests werden automatisch an AppleJuice Core weitergeleitet
+- **GET** `/api/*` - Proxy zu appleJuice Core
+- Alle API-Requests werden automatisch an appleJuice Core weitergeleitet
 
 ### Beispiel-Requests
 
@@ -224,7 +224,7 @@ curl -X POST http://localhost:3000/config \
   -H "Content-Type: application/json" \
   -d '{"coreHost": "192.168.1.100", "corePort": "9851"}'
 
-# AppleJuice Core API (über Proxy)
+# appleJuice Core API (über Proxy)
 curl http://localhost:3000/api/info
 ```
 
@@ -232,10 +232,10 @@ curl http://localhost:3000/api/info
 
 ### Häufige Probleme
 
-#### Verbindung zu AppleJuice Core fehlgeschlagen
+#### Verbindung zu appleJuice Core fehlgeschlagen
 
 ```bash
-# Prüfen ob AppleJuice Core erreichbar ist
+# Prüfen ob appleJuice Core erreichbar ist
 curl http://192.168.1.100:9851/
 
 # Firewall-Einstellungen prüfen
@@ -303,8 +303,8 @@ Dieses Projekt ist unter der MIT-Lizenz lizenziert. Siehe [LICENSE](LICENSE) fü
 
 - [CoreUI](https://coreui.io/) für das fantastische Admin-Template
 - [Vue.js](https://vuejs.org/) für das reaktive Framework
-- [AppleJuice Community](https://applejuicenet.de/) für die Unterstützung
+- [appleJuice Community](https://applejuicenet.de/) für die Unterstützung
 
 ---
 
-**AppleJuice Nexus** - Moderne Web-UI für das AppleJuice P2P-Netzwerk 🍎
+**appleJuice Nexus** - Moderne Web-UI für das appleJuice P2P-Netzwerk 🍎

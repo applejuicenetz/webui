@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
-  aj-nexus:
+  aj-webui:
     build: .
-    container_name: aj-nexus
+    container_name: aj-webui
+    network_mode: bridge
     ports:
       - "3000:3000"
     environment:
@@ -13,13 +12,8 @@ services:
       - PORT=3000
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/status', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000/status', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-# Für erweiterte Setups
-networks:
-  default:
-    name: applejuice-network
