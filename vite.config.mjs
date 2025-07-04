@@ -34,11 +34,20 @@ export default defineConfig(() => {
     },
     server: {
       port: 3000,
+      host: '0.0.0.0', // Wichtig für Docker
       cors: true,
+      hmr: {
+        host: 'localhost', // HMR für lokale Entwicklung
+        port: 3000,
+      },
+      watch: {
+        usePolling: true, // Für Docker file watching
+        interval: 100,
+      },
       proxy: {
         // Proxy AppleJuice Core API requests to avoid CORS issues
         '/api': {
-          target: 'http://192.168.178.222:9854',
+          target: `http://${process.env.VITE_AJ_CORE_HOST || '192.168.178.222'}:${process.env.VITE_AJ_CORE_PORT || '9854'}`,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
           configure: (proxy, options) => {

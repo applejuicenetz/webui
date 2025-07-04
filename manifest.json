@@ -1,6 +1,6 @@
 {
   "name": "AJ WebUI - AppleJuice",
-  "short_name": "AJ Nexus",
+  "short_name": "AJ WebUI",
   "description": "AppleJuice Admin Dashboard powered by CoreUI Vue.js Template",
   "start_url": "/",
   "display": "standalone",

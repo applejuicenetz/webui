@@ -5,10 +5,11 @@ services:
     network_mode: bridge
     ports:
       - "3000:3000"
+      - "5173:5173"  # Vite Development Server
     environment:
       - NODE_ENV=production
-      - APPLEJUICE_CORE_HOST=192.168.178.222
-      - APPLEJUICE_CORE_PORT=9854
+      - APPLEJUICE_CORE_HOST=192.168.1.100
+      - APPLEJUICE_CORE_PORT=9851
       - PORT=3000
     restart: unless-stopped
     healthcheck:

@@ -43,8 +43,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Passwort hashen bevor es verwendet wird
       const hashedPassword = ensureHashedPassword(pass)
 
-      // Always use proxy endpoint - server handles the proxy
-      const fullUrl = `/api/settings.xml?password=${hashedPassword}`
+      // Verbindung über lokalen Proxy-Server
+      const fullUrl = `http://localhost:3001/api/settings.xml?password=${hashedPassword}`
+      console.log('Verbindung über Proxy zu:', fullUrl.replace(/password=[^&]*/, 'password=****'))
+      console.log('Proxy leitet weiter an:', `http://${url}:${portNum}/xml/settings.xml?password=${hashedPassword}`)
 
       // Prepare headers
       const headers = {
@@ -52,28 +54,45 @@ export const useAuthStore = defineStore('auth', () => {
         'Cache-Control': 'no-cache'
       }
 
-      // Verbindung testen
+      // Verbindung über lokalen Proxy-Server
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers,
+        mode: 'cors',  // CORS funktioniert mit unserem Proxy
         // Timeout aus Konfiguration
         signal: AbortSignal.timeout(config.core.timeout)
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      console.log('Response status:', response.status)
+      console.log('Response headers:', [...response.headers.entries()])
+
+      // Versuche Antwort zu lesen, auch wenn Status nicht OK ist
+      let responseText = ''
+      try {
+        responseText = await response.text()
+        console.log('Response text (first 200 chars):', responseText.substring(0, 200))
+      } catch (readError) {
+        console.log('Error reading response:', readError)
       }
 
-      // Prüfen ob es wirklich eine XML-Datei ist
-      const contentType = response.headers.get('content-type')
-      const responseText = await response.text()
+      // Prüfe ob wir XML-Inhalte haben, auch bei nicht-OK Status
+      if (responseText && responseText.includes('<')) {
+        console.log('XML content detected, treating as successful')
+        // Weitermachen mit XML-Parsing
+      } else if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
 
       if (!responseText || responseText.trim() === '') {
         throw new Error('Leere Antwort vom Server')
       }
 
+      // Debug: XML-Antwort ausgeben
+      console.log('XML-Antwort:', responseText.substring(0, 200))
+
       // Einfache XML-Validierung
       if (!responseText.includes('<?xml') && !responseText.includes('<settings')) {
+        console.log('XML-Validierung fehlgeschlagen - Antwort:', responseText)
         throw new Error('Ungültige XML-Antwort')
       }
 

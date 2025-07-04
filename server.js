@@ -1,13 +1,15 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
+const http = require('http');
+const net = require('net');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Default AppleJuice Core settings
-let CORE_HOST = process.env.APPLEJUICE_CORE_HOST || '192.168.178.222';
-let CORE_PORT = process.env.APPLEJUICE_CORE_PORT || '9854';
+let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.178.222';
+let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9854';
 
 console.log(`🚀 Starting AppleJuice Nexus Server on port ${PORT}`);
 console.log(`🔗 Proxying API requests to: http://${CORE_HOST}:${CORE_PORT}`);
@@ -31,31 +33,107 @@ function createDynamicProxy() {
       proxyRes.headers['Access-Control-Allow-Origin'] = '*';
       proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
       proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
-      
+
       console.log(`✅ Response: ${proxyRes.statusCode} for ${req.url}`);
     },
     onError: (err, req, res) => {
       console.error(`❌ Proxy Error: ${err.message}`);
-      res.status(500).json({ 
-        error: 'Proxy Error', 
+      res.status(500).json({
+        error: 'Proxy Error',
         message: 'Kann nicht mit AppleJuice Core verbinden',
-        details: err.message 
+        details: err.message
       });
     }
   });
 }
 
-// API Proxy - alle /api/* Anfragen werden an AppleJuice Core weitergeleitet
+// Custom proxy handler for AppleJuice Core (handles malformed HTTP responses)
 app.use('/api', (req, res, next) => {
-  // Recreate proxy with current CORE_HOST and CORE_PORT
-  const proxy = createDynamicProxy();
-  proxy(req, res, next);
+  const targetPath = req.url.replace('/api', '');
+
+  console.log(`📡 Raw TCP Proxy: ${req.method} ${req.url} -> ${CORE_HOST}:${CORE_PORT}${targetPath}`);
+
+  // Use raw TCP connection to handle malformed HTTP responses
+  const client = new net.Socket();
+  let responseData = '';
+
+  client.connect(CORE_PORT, CORE_HOST, () => {
+    // Send raw HTTP request
+    const httpRequest = `${req.method} ${targetPath} HTTP/1.1\r\nHost: ${CORE_HOST}:${CORE_PORT}\r\nConnection: close\r\n\r\n`;
+    client.write(httpRequest);
+  });
+
+  client.on('data', (data) => {
+    responseData += data.toString();
+  });
+
+  client.on('close', () => {
+    try {
+      // Parse the raw HTTP response
+      const lines = responseData.split('\n');
+      const statusLine = lines[0].trim();
+      const statusMatch = statusLine.match(/HTTP\/1\.1 (\d+)/);
+      const statusCode = statusMatch ? parseInt(statusMatch[1]) : 500;
+
+      console.log(`✅ Raw Response: ${statusCode} for ${req.url}`);
+
+      // Set CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+      // Find the start of the body (after empty line)
+      let bodyStart = responseData.indexOf('\n\n');
+      if (bodyStart === -1) {
+        bodyStart = responseData.indexOf('\r\n\r\n');
+      }
+
+      if (bodyStart !== -1) {
+        const body = responseData.substring(bodyStart + 2).trim();
+
+        // Check if it's XML
+        if (body.includes('<?xml') || body.includes('<settings')) {
+          res.setHeader('Content-Type', 'application/xml');
+          res.status(statusCode).send(body);
+        } else {
+          res.status(statusCode).send(body);
+        }
+      } else {
+        res.status(statusCode).send('');
+      }
+    } catch (error) {
+      console.error(`❌ Response parsing error: ${error.message}`);
+      res.status(500).json({
+        error: 'Response parsing error',
+        message: 'Fehler beim Parsen der AppleJuice Core Antwort',
+        details: error.message
+      });
+    }
+  });
+
+  client.on('error', (err) => {
+    console.error(`❌ TCP Proxy Error: ${err.message}`);
+    res.status(500).json({
+      error: 'Connection Error',
+      message: 'Kann nicht mit AppleJuice Core verbinden',
+      details: err.message
+    });
+  });
+
+  client.setTimeout(10000, () => {
+    console.error('❌ TCP Proxy Timeout');
+    client.destroy();
+    res.status(504).json({
+      error: 'Timeout',
+      message: 'AppleJuice Core antwortet nicht'
+    });
+  });
 });
 
 // Statische Dateien ausliefern (Production)
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'dist')));
-  
+
   // Alle anderen Routen zur index.html weiterleiten (SPA)
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
@@ -64,7 +142,7 @@ if (process.env.NODE_ENV === 'production') {
   // Development Info
   app.get('/', (req, res) => {
     res.json({
-      message: 'AppleJuice Nexus API Server',
+      message: 'AppleJuice WebUI API Server',
       mode: 'development',
       proxy: `http://${CORE_HOST}:${CORE_PORT}`,
       endpoints: {
@@ -86,17 +164,17 @@ app.get('/config', (req, res) => {
 
 app.post('/config', (req, res) => {
   const { coreHost, corePort } = req.body;
-  
+
   if (coreHost) {
     CORE_HOST = coreHost;
     console.log(`🔧 Core Host updated to: ${CORE_HOST}`);
   }
-  
+
   if (corePort) {
     CORE_PORT = corePort;
     console.log(`🔧 Core Port updated to: ${CORE_PORT}`);
   }
-  
+
   res.json({
     message: 'Configuration updated',
     coreHost: CORE_HOST,
@@ -107,7 +185,7 @@ app.post('/config', (req, res) => {
 // Status Endpoint
 app.get('/status', (req, res) => {
   res.json({
-    server: 'AppleJuice Nexus',
+    server: 'AppleJuice WebUI',
     status: 'running',
     port: PORT,
     proxy: `http://${CORE_HOST}:${CORE_PORT}`,

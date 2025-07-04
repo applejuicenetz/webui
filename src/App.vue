@@ -2,7 +2,7 @@
 import { onBeforeMount } from 'vue'
 import { useColorModes } from '@coreui/vue'
 
-import { useThemeStore } from '@/stores/theme.js'
+import { useThemeStore } from './stores/theme.js'
 
 const { isColorModeSet, setColorMode } = useColorModes(
   'coreui-free-vue-admin-template-theme',
