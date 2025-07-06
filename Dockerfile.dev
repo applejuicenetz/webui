@@ -1,0 +1,97 @@
+# Development Docker Container für AppleJuice WebUI
+
+FROM node:18-alpine
+
+# Arbeitsverzeichnis setzen
+WORKDIR /app
+
+# System-Dependencies installieren
+RUN apk add --no-cache \
+    curl \
+    bash \
+    git \
+    procps
+
+# Package files kopieren
+COPY package*.json ./
+
+# Alle Dependencies installieren (auch dev)
+RUN npm install
+
+# Source code kopieren
+COPY . .
+
+# Development start script an einen sicheren Ort kopieren (außerhalb des Volume-Mounts)
+RUN echo '#!/bin/bash' > /usr/local/bin/start-dev-services.sh && \
+    echo 'set -e' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'cd /app' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "🚀 Starting AppleJuice WebUI Development Services..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Dependencies installieren falls node_modules nicht existiert' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'if [ ! -d "node_modules" ]; then' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  echo "📦 Installing dependencies..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  npm install' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'fi' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Prüfen ob notwendige Dateien existieren' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'if [ ! -f "simple-proxy-cjs.js" ]; then' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  echo "❌ Error: simple-proxy-cjs.js not found!"' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  echo "Make sure you have mounted the source code correctly."' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  exit 1' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'fi' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Proxy Server starten (Port 3001)' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "📡 Starting Proxy Server on port 3001..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'node simple-proxy-cjs.js &' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'PROXY_PID=$!' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Warten bis Proxy bereit ist' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'sleep 3' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Vite Development Server starten (Port 5173)' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "🔥 Starting Vite Development Server on port 5173..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'npm run dev:docker &' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'VITE_PID=$!' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Warten bis Vite bereit ist' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'sleep 5' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Status ausgeben' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "✅ Services started successfully!"' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "🌐 Frontend: http://localhost:5173"' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "📡 Proxy API: http://localhost:3001/api/"' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "🎯 Target: http://${VITE_AJ_CORE_HOST:-192.168.178.222}:${VITE_AJ_CORE_PORT:-9854}"' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo ""' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'echo "🛑 Press Ctrl+C to stop all services"' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Funktion für graceful shutdown' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'cleanup() {' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  echo ""' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  echo "🛑 Shutting down development services..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  if kill -0 $PROXY_PID 2>/dev/null; then' >> /usr/local/bin/start-dev-services.sh && \
+    echo '    echo "  Stopping Proxy Server..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo '    kill $PROXY_PID' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  fi' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  if kill -0 $VITE_PID 2>/dev/null; then' >> /usr/local/bin/start-dev-services.sh && \
+    echo '    echo "  Stopping Vite Development Server..."' >> /usr/local/bin/start-dev-services.sh && \
+    echo '    kill $VITE_PID' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  fi' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  echo "✅ All services stopped"' >> /usr/local/bin/start-dev-services.sh && \
+    echo '  exit 0' >> /usr/local/bin/start-dev-services.sh && \
+    echo '}' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Signal handlers' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'trap cleanup SIGINT SIGTERM' >> /usr/local/bin/start-dev-services.sh && \
+    echo '' >> /usr/local/bin/start-dev-services.sh && \
+    echo '# Warten auf beide Prozesse' >> /usr/local/bin/start-dev-services.sh && \
+    echo 'wait $PROXY_PID $VITE_PID' >> /usr/local/bin/start-dev-services.sh
+
+# Script ausführbar machen
+RUN chmod +x /usr/local/bin/start-dev-services.sh
+
+# Ports expose
+EXPOSE 5173 3001 3000
+
+# Development Services starten
+CMD ["/bin/bash", "/usr/local/bin/start-dev-services.sh"]

@@ -35,7 +35,7 @@ COPY simple-proxy-cjs.js ./
 COPY start-services.sh ./
 
 # Production start script inline erstellen (falls externe Datei fehlt)
-RUN echo '#!/bin/bash' > start-services-inline.sh && \
+RUN echo '#!/bin/sh' > start-services-inline.sh && \
     echo 'set -e' >> start-services-inline.sh && \
     echo '' >> start-services-inline.sh && \
     echo 'echo "🚀 Starting AppleJuice WebUI Services..."' >> start-services-inline.sh && \
@@ -70,11 +70,11 @@ RUN echo '#!/bin/bash' > start-services-inline.sh && \
 RUN chmod +x start-services.sh start-services-inline.sh
 
 # Ports expose
-EXPOSE 3000 3001
+EXPOSE 3002 3003
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/status', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+  CMD node -e "require('http').get('http://localhost:3002/status', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
 
 # Services starten (mit Fallback)
-CMD ["sh", "-c", "if [ -f ./start-services.sh ]; then ./start-services.sh; else ./start-services-inline.sh; fi"]
+CMD ["sh", "-c", "if [ -f ./start-services.sh ] && [ -x ./start-services.sh ]; then ./start-services.sh; else sh ./start-services-inline.sh; fi"]

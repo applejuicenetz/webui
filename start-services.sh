@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # AppleJuice WebUI Services Starter
 
