@@ -3,10 +3,21 @@
  * Verwaltet Umgebungsvariablen und Standardwerte
  */
 
+/**
+ * Ermittelt automatisch den Host aus der aktuellen URL
+ * @returns {string} - Host aus der Browser-URL
+ */
+export function getAutoHost() {
+  if (typeof window !== 'undefined' && window.location) {
+    return window.location.hostname
+  }
+  return 'localhost'
+}
+
 export const config = {
   // Core-Verbindung
   core: {
-    host: import.meta.env.VITE_AJ_CORE_HOST || 'localhost',
+    host: import.meta.env.VITE_AJ_CORE_HOST || getAutoHost(),
     port: import.meta.env.VITE_AJ_CORE_PORT || '9851',
     protocol: import.meta.env.VITE_AJ_CORE_PROTOCOL || 'http',
     timeout: parseInt(import.meta.env.VITE_AJ_CONNECTION_TIMEOUT) || 10000
@@ -52,15 +63,15 @@ export function buildSettingsUrl(host, port, password, protocol = config.core.pr
  */
 export function validateCoreConfig(host, port) {
   const errors = {}
-  
+
   if (!host || host.trim() === '') {
     errors.host = 'Host/IP-Adresse ist erforderlich'
   }
-  
+
   if (!port || isNaN(parseInt(port)) || parseInt(port) < 1 || parseInt(port) > 65535) {
     errors.port = 'Port muss eine Zahl zwischen 1 und 65535 sein'
   }
-  
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors

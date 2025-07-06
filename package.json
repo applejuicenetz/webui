@@ -15,7 +15,14 @@
     "lint": "eslint",
     "preview": "vite preview",
     "serve": "node server.js",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "proxy": "node simple-proxy-cjs.js",
+    "start:all": "concurrently \"npm run proxy\" \"npm run start\"",
+    "start:dev": "concurrently \"npm run proxy\" \"npm run dev\"",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
+    "docker:dev:down": "docker-compose -f docker-compose.dev.yml down",
+    "docker:prod": "docker-compose up --build",
+    "docker:prod:down": "docker-compose down"
   },
   "dependencies": {
     "@coreui/chartjs": "^4.1.0",
@@ -37,6 +44,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.1",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^8.2.2",
     "eslint": "^9.20.1",
     "eslint-plugin-vue": "^9.32.0",
     "globals": "^15.15.0",

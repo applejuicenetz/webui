@@ -5,11 +5,12 @@ services:
     network_mode: bridge
     ports:
       - "3000:3000"
+      - "3001:3001"  # Proxy Server
       - "5173:5173"  # Vite Development Server
     environment:
       - NODE_ENV=production
-      - APPLEJUICE_CORE_HOST=192.168.1.100
-      - APPLEJUICE_CORE_PORT=9851
+      - VITE_AJ_CORE_HOST=192.168.178.222
+      - VITE_AJ_CORE_PORT=9854
       - PORT=3000
     restart: unless-stopped
     healthcheck:

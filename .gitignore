@@ -44,3 +44,8 @@ Thumbs.db
 *.vi
 *.zip
 *~
+
+# Development files - local development only
+start-dev-services.ps1
+start-services.ps1
+DEVELOPMENT.md
