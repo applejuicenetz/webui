@@ -43,12 +43,14 @@ export const useAuthStore = defineStore('auth', () => {
       // Passwort hashen bevor es verwendet wird
       const hashedPassword = ensureHashedPassword(pass)
 
-      // Verbindung über lokalen Proxy-Server (über Docker-Host)
+      // Verbindung über separaten Proxy-Server (Port 3001)
       const proxyHost = window.location.hostname || 'localhost'
-      const fullUrl = `http://${proxyHost}:3001/api/settings.xml?password=${hashedPassword}`
-      console.log('🌐 Browser-Host:', proxyHost)
-      console.log('📡 Verbindung über Proxy zu:', fullUrl.replace(/password=[^&]*/, 'password=****'))
-      console.log('🎯 Proxy leitet weiter an:', `http://${url}:${portNum}/xml/settings.xml?password=${hashedPassword}`)
+      const proxyPort = '3001'
+      const fullUrl = `http://${proxyHost}:${proxyPort}/api/settings.xml?password=${hashedPassword}`
+      console.log('[HOST] Browser-Host:', window.location.hostname)
+      console.log('[PORT] Browser-Port:', window.location.port)
+      console.log('[PROXY] Verbindung über Proxy zu:', fullUrl.replace(/password=[^&]*/, 'password=****'))
+      console.log('[TARGET] Proxy leitet weiter an:', `http://${url}:${portNum}/xml/settings.xml?password=${hashedPassword}`)
 
       // Prepare headers
       const headers = {
@@ -60,22 +62,39 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers,
-        mode: 'no-cors',  // CORS umgehen - Status kann nicht gelesen werden
+        mode: 'no-cors',  // CORS mit korrekten Headers
         // Timeout aus Konfiguration
         signal: AbortSignal.timeout(config.core.timeout)
       })
 
-      console.log('🎯 Response type:', response.type)
-      console.log('🎯 Response status:', response.status)
-      console.log('🎯 Response ok:', response.ok)
+      console.log('[RESPONSE] Response type:', response.type)
+      console.log('[RESPONSE] Response status:', response.status)
+      console.log('[RESPONSE] Response ok:', response.ok)
 
-      // ✅ **BEI NO-CORS IST JEDE ERFOLGREICHE ANTWORT EIN LOGIN**
-      if (response.type === 'opaque') {
-        console.log('✅ Opaque Response - Login erfolgreich!')
+      // [OK] **ERFOLGREICHE ANTWORT = LOGIN**
+      if (response.type === 'opaque' || response.type === 'basic') {
+        console.log(`[OK] ${response.type} Response - Login erfolgreich!`)
 
-        // Bei no-cors können wir die Response nicht lesen, aber das ist OK
-        // Der Proxy zeigt im Log, dass HTTP 200 empfangen wurde
-        console.log('📄 Response text nicht lesbar wegen no-cors mode (das ist OK)')
+        // Bei erfolgreicher Response prüfen wir auch den Status
+        if (response.type === 'basic' && response.status >= 400) {
+          throw new Error(`HTTP Error ${response.status}: ${response.statusText}`)
+        }
+
+        // Bei no-cors (opaque) können wir die Response nicht lesen, aber das ist OK
+        // Bei basic können wir mehr Informationen auswerten
+        if (response.type === 'opaque') {
+          console.log('[INFO] Response text nicht lesbar wegen no-cors mode (das ist OK)')
+        } else {
+          console.log('[INFO] Response verfügbar, Status:', response.status)
+
+          // Bei basic responses können wir den Content lesen
+          try {
+            const responseText = await response.text()
+            console.log('[INFO] Response preview:', responseText.substring(0, 100) + '...')
+          } catch (e) {
+            console.log('[INFO] Response nicht lesbar:', e.message)
+          }
+        }
 
         // **SESSION-DATEN SPEICHERN**
         coreUrl.value = url
@@ -86,7 +105,7 @@ export const useAuthStore = defineStore('auth', () => {
         // In localStorage persistieren
         saveToLocalStorage()
 
-        console.log('✅ Login-Daten gespeichert:')
+        console.log('[OK] Login-Daten gespeichert:')
         console.log('   - URL:', url)
         console.log('   - Port:', portNum)
         console.log('   - Passwort:', '****')
@@ -214,6 +233,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     getConnectionUrl,
     getFullUrl,
+    corePassword: computed(() => password.value), // Add this for coreService compatibility
 
     // Actions
     login,

@@ -40,7 +40,7 @@ const routes = [
       {
         path: '/app/server',
         name: 'Server',
-        component: () => import('../views/Server.vue'),
+        component: () => import('../views/ServerList.vue'),
       },
       {
         path: '/app/settings',

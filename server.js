@@ -11,8 +11,8 @@ const PORT = process.env.PORT || 3000;
 let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.178.222';
 let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9854';
 
-console.log(`🚀 Starting AppleJuice Nexus Server on port ${PORT}`);
-console.log(`🔗 Proxying API requests to: http://${CORE_HOST}:${CORE_PORT}`);
+console.log(`[START] Starting AppleJuice Nexus Server on port ${PORT}`);
+console.log(`[PROXY] Proxying API requests to: http://${CORE_HOST}:${CORE_PORT}`);
 
 // Middleware für JSON parsing
 app.use(express.json());
@@ -26,7 +26,7 @@ function createDynamicProxy() {
       '^/api': '', // /api/settings.xml wird zu /settings.xml
     },
     onProxyReq: (proxyReq, req, res) => {
-      console.log(`📡 Proxy: ${req.method} ${req.url} -> http://${CORE_HOST}:${CORE_PORT}${req.url.replace('/api', '')}`);
+      console.log(`[PROXY] ${req.method} ${req.url} -> http://${CORE_HOST}:${CORE_PORT}${req.url.replace('/api', '')}`);
     },
     onProxyRes: (proxyRes, req, res) => {
       // CORS Headers hinzufügen
@@ -34,10 +34,10 @@ function createDynamicProxy() {
       proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
       proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization';
 
-      console.log(`✅ Response: ${proxyRes.statusCode} for ${req.url}`);
+      console.log(`[OK] Response: ${proxyRes.statusCode} for ${req.url}`);
     },
     onError: (err, req, res) => {
-      console.error(`❌ Proxy Error: ${err.message}`);
+      console.error(`[ERROR] Proxy Error: ${err.message}`);
       res.status(500).json({
         error: 'Proxy Error',
         message: 'Kann nicht mit AppleJuice Core verbinden',
@@ -49,9 +49,9 @@ function createDynamicProxy() {
 
 // Custom proxy handler for AppleJuice Core (handles malformed HTTP responses)
 app.use('/api', (req, res, next) => {
-  const targetPath = req.url.replace('/api', '');
+  const targetPath = req.url; // req.url is already stripped of /api by Express
 
-  console.log(`📡 Raw TCP Proxy: ${req.method} ${req.url} -> ${CORE_HOST}:${CORE_PORT}${targetPath}`);
+  console.log(`[TCP-PROXY] ${req.method} /api${req.url} -> ${CORE_HOST}:${CORE_PORT}${targetPath}`);
 
   // Use raw TCP connection to handle malformed HTTP responses
   const client = new net.Socket();
@@ -75,7 +75,7 @@ app.use('/api', (req, res, next) => {
       const statusMatch = statusLine.match(/HTTP\/1\.1 (\d+)/);
       const statusCode = statusMatch ? parseInt(statusMatch[1]) : 500;
 
-      console.log(`✅ Raw Response: ${statusCode} for ${req.url}`);
+      console.log(`[OK] Raw Response: ${statusCode} for ${req.url}`);
 
       // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
@@ -102,7 +102,7 @@ app.use('/api', (req, res, next) => {
         res.status(statusCode).send('');
       }
     } catch (error) {
-      console.error(`❌ Response parsing error: ${error.message}`);
+      console.error(`[ERROR] Response parsing error: ${error.message}`);
       res.status(500).json({
         error: 'Response parsing error',
         message: 'Fehler beim Parsen der AppleJuice Core Antwort',
@@ -112,7 +112,7 @@ app.use('/api', (req, res, next) => {
   });
 
   client.on('error', (err) => {
-    console.error(`❌ TCP Proxy Error: ${err.message}`);
+    console.error(`[ERROR] TCP Proxy Error: ${err.message}`);
     res.status(500).json({
       error: 'Connection Error',
       message: 'Kann nicht mit AppleJuice Core verbinden',
@@ -121,12 +121,154 @@ app.use('/api', (req, res, next) => {
   });
 
   client.setTimeout(10000, () => {
-    console.error('❌ TCP Proxy Timeout');
+    console.error('[ERROR] TCP Proxy Timeout');
     client.destroy();
     res.status(504).json({
       error: 'Timeout',
       message: 'AppleJuice Core antwortet nicht'
     });
+  });
+});
+
+// Special proxy handler for XML endpoints (alternative approach)
+app.use('/proxy', (req, res) => {
+  console.log(`[PROXY-REQ] ${req.method} ${req.url}`);
+
+  // CORS Preflight Request
+  if (req.method === 'OPTIONS') {
+    res.writeHead(200, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, Cache-Control',
+      'Access-Control-Max-Age': '86400'
+    });
+    res.end();
+    return;
+  }
+
+  // Nur GET-Requests weiterleiten
+  if (req.method !== 'GET') {
+    res.writeHead(405, {
+      'Content-Type': 'text/plain',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end('Method Not Allowed');
+    return;
+  }
+
+  // URL parsen - /proxy/api/... -> /xml/...
+  const targetPath = req.url.replace('/proxy/api/', '/xml/');
+  console.log(`[PROXY] ${req.url} -> http://${CORE_HOST}:${CORE_PORT}${targetPath}`);
+
+  // Raw TCP-Socket verwenden (umgeht HTTP-Parser)
+  const socket = net.createConnection(CORE_PORT, CORE_HOST, () => {
+    console.log(`[CONNECT] Connected to ${CORE_HOST}:${CORE_PORT}`);
+
+    // HTTP-Request manuell senden (HTTP/1.0 für bessere Kompatibilität)
+    const httpRequest = [
+      `GET ${targetPath} HTTP/1.0`,
+      `Host: ${CORE_HOST}`,
+      `User-Agent: Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)`,
+      `Accept: */*`,
+      `Connection: close`,
+      ``,
+      ``
+    ].join('\r\n');
+
+    console.log(`[SEND] Sending HTTP request:`, httpRequest.replace(/\r\n/g, '\\r\\n'));
+    socket.write(httpRequest);
+  });
+
+  let rawResponse = '';
+  let headersParsed = false;
+  let statusCode = 200;
+  let body = '';
+
+  socket.on('data', (chunk) => {
+    console.log(`[DATA] Received chunk: ${chunk.length} bytes`);
+    rawResponse += chunk.toString();
+
+    if (!headersParsed) {
+      const headerEndIndex = rawResponse.indexOf('\r\n\r\n');
+      if (headerEndIndex !== -1) {
+        headersParsed = true;
+        const headerSection = rawResponse.substring(0, headerEndIndex);
+        body = rawResponse.substring(headerEndIndex + 4);
+
+        console.log(`[HEADERS] Raw Headers:`, headerSection);
+
+        // Status-Code extrahieren
+        const statusMatch = headerSection.match(/HTTP\/1\.[01] (\d+)/);
+        if (statusMatch) {
+          statusCode = parseInt(statusMatch[1]);
+        }
+
+        // Sichere Headers setzen mit CORS
+        const safeHeaders = {
+          'Content-Type': 'application/xml; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, Cache-Control',
+          'Access-Control-Allow-Credentials': 'false',
+          'Cache-Control': 'no-cache'
+        };
+
+        console.log(`[RESPONSE] Status: ${statusCode}`);
+        res.writeHead(statusCode, safeHeaders);
+
+        // Body sofort senden falls vorhanden
+        if (body) {
+          console.log(`[BODY] Initial body part: ${body.length} chars`);
+          res.write(body);
+        }
+      } else {
+        // Noch keine kompletten Headers
+        console.log(`[PARTIAL] Partial response: ${rawResponse.length} chars`);
+        if (rawResponse.length > 0) {
+          console.log(`[PARTIAL] Raw response so far: ${rawResponse.substring(0, 100)}...`);
+        }
+      }
+    } else {
+      // Weitere Body-Daten
+      body += chunk.toString();
+      console.log(`[BODY] Additional body: ${chunk.length} chars`);
+      res.write(chunk);
+    }
+  });
+
+  socket.on('end', () => {
+    console.log(`[OK] Connection ended`);
+    console.log(`[BODY] Total body length: ${body.length}`);
+
+    if (body.length > 0) {
+      console.log(`[BODY] Body preview: ${body.substring(0, 200)}...`);
+    }
+
+    res.end();
+  });
+
+  socket.on('error', (err) => {
+    console.error('[ERROR] Socket error:', err.message);
+    if (!res.headersSent) {
+      res.writeHead(500, {
+        'Content-Type': 'text/plain',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end('Socket Error: ' + err.message);
+    }
+  });
+
+  // Request timeout
+  socket.setTimeout(10000, () => {
+    console.error('[ERROR] Request timeout');
+    socket.destroy();
+    if (!res.headersSent) {
+      res.writeHead(504, {
+        'Content-Type': 'text/plain',
+        'Access-Control-Allow-Origin': '*'
+      });
+      res.end('Request Timeout');
+    }
   });
 });
 
@@ -167,12 +309,12 @@ app.post('/config', (req, res) => {
 
   if (coreHost) {
     CORE_HOST = coreHost;
-    console.log(`🔧 Core Host updated to: ${CORE_HOST}`);
+    console.log(`[CONFIG] Core Host updated to: ${CORE_HOST}`);
   }
 
   if (corePort) {
     CORE_PORT = corePort;
-    console.log(`🔧 Core Port updated to: ${CORE_PORT}`);
+    console.log(`[CONFIG] Core Port updated to: ${CORE_PORT}`);
   }
 
   res.json({
@@ -195,18 +337,19 @@ app.get('/status', (req, res) => {
 
 // Server starten
 app.listen(PORT, () => {
-  console.log(`✅ Server läuft auf http://localhost:${PORT}`);
-  console.log(`📊 Status: http://localhost:${PORT}/status`);
-  console.log(`🔧 API Proxy: http://localhost:${PORT}/api/*`);
+  console.log(`[OK] Server läuft auf http://localhost:${PORT}`);
+  console.log(`[STATUS] Status: http://localhost:${PORT}/status`);
+  console.log(`[API] API Proxy: http://localhost:${PORT}/api/*`);
+  console.log(`[PROXY] Special Proxy: http://localhost:${PORT}/proxy/*`);
 });
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 Server wird beendet...');
+  console.log('[SHUTDOWN] Server wird beendet...');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('🛑 Server wird beendet...');
+  console.log('[SHUTDOWN] Server wird beendet...');
   process.exit(0);
 });

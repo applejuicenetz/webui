@@ -8,12 +8,12 @@ const PROXY_PORT = process.env.PROXY_PORT || 3001
 const AJ_HOST = process.env.VITE_AJ_CORE_HOST || '192.168.178.222'
 const AJ_PORT = process.env.VITE_AJ_CORE_PORT || 9854
 
-console.log(`🚀 Starting AppleJuice Proxy Server...`)
-console.log(`🔧 Config: AJ_HOST=${AJ_HOST}, AJ_PORT=${AJ_PORT}, PROXY_PORT=${PROXY_PORT}`)
+console.log(`[START] Starting AppleJuice Proxy Server...`)
+console.log(`[CONFIG] Config: AJ_HOST=${AJ_HOST}, AJ_PORT=${AJ_PORT}, PROXY_PORT=${PROXY_PORT}`)
 
 // Einfacher HTTP-Server
 const server = http.createServer((req, res) => {
-  console.log(`📥 Request: ${req.method} ${req.url}`)
+  console.log(`[REQUEST] ${req.method} ${req.url}`)
 
   // CORS Preflight Request
   if (req.method === 'OPTIONS') {
@@ -39,11 +39,11 @@ const server = http.createServer((req, res) => {
 
   // URL parsen
   const targetPath = req.url.replace('/api/', '/xml/')
-  console.log(`🔄 Proxy: ${req.url} -> http://${AJ_HOST}:${AJ_PORT}${targetPath}`)
+  console.log(`[PROXY] ${req.url} -> http://${AJ_HOST}:${AJ_PORT}${targetPath}`)
 
   // Raw TCP-Socket verwenden (umgeht HTTP-Parser)
   const socket = net.createConnection(AJ_PORT, AJ_HOST, () => {
-    console.log(`🔗 Connected to ${AJ_HOST}:${AJ_PORT}`)
+    console.log(`[CONNECT] Connected to ${AJ_HOST}:${AJ_PORT}`)
 
     // HTTP-Request manuell senden (HTTP/1.0 für bessere Kompatibilität)
     const httpRequest = [
@@ -56,7 +56,7 @@ const server = http.createServer((req, res) => {
       ``
     ].join('\r\n')
 
-    console.log(`📤 Sending HTTP request:`)
+    console.log(`[SEND] Sending HTTP request:`)
     console.log(httpRequest.replace(/\r\n/g, '\\r\\n'))
 
     socket.write(httpRequest)
@@ -68,23 +68,52 @@ const server = http.createServer((req, res) => {
   let body = ''
 
   socket.on('data', (chunk) => {
-    console.log(`📦 Received chunk: ${chunk.length} bytes`)
+    console.log(`[DATA] Received chunk: ${chunk.length} bytes`)
     rawResponse += chunk.toString()
 
     if (!headersParsed) {
-      const headerEndIndex = rawResponse.indexOf('\r\n\r\n')
+      // Prüfe verschiedene Header-Trennzeichen
+      let headerEndIndex = rawResponse.indexOf('\r\n\r\n')
+      let headerSeparator = 4
+
+      if (headerEndIndex === -1) {
+        headerEndIndex = rawResponse.indexOf('\n\n')
+        headerSeparator = 2
+      }
+
       if (headerEndIndex !== -1) {
         headersParsed = true
         const headerSection = rawResponse.substring(0, headerEndIndex)
-        body = rawResponse.substring(headerEndIndex + 4)
+        body = rawResponse.substring(headerEndIndex + headerSeparator)
 
-        console.log(`📋 Raw Headers:`)
+        console.log(`[HEADERS] Raw Headers:`)
         console.log(headerSection)
+        console.log(`[BODY] Initial body length: ${body.length}`)
+        console.log(`[BODY] Initial body preview: ${body.substring(0, 100)}...`)
 
         // Status-Code extrahieren
         const statusMatch = headerSection.match(/HTTP\/1\.[01] (\d+)/)
         if (statusMatch) {
           statusCode = parseInt(statusMatch[1])
+        }
+
+        console.log(`[RESPONSE] Status: ${statusCode}`)
+
+        // Prüfung auf Fehler-Status-Codes
+        if (statusCode === 302 && headerSection.includes('location: /wrongpassword')) {
+          console.log('[AUTH ERROR] Wrong password detected')
+          res.writeHead(401, {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, Cache-Control',
+          })
+          res.end(JSON.stringify({
+            error: 'Authentication failed',
+            message: 'Wrong password',
+            code: 'WRONG_PASSWORD'
+          }))
+          return
         }
 
         // Sichere Headers setzen mit CORS
@@ -97,42 +126,41 @@ const server = http.createServer((req, res) => {
           'Cache-Control': 'no-cache'
         }
 
-        console.log(`📤 Response Status: ${statusCode}`)
         res.writeHead(statusCode, safeHeaders)
 
         // Body sofort senden falls vorhanden
         if (body) {
-          console.log(`📄 Initial body part: ${body.length} chars`)
+          console.log(`[BODY] Initial body part: ${body.length} chars`)
           res.write(body)
         }
       } else {
         // Noch keine kompletten Headers
-        console.log(`📋 Partial response: ${rawResponse.length} chars`)
+        console.log(`[PARTIAL] Partial response: ${rawResponse.length} chars`)
         if (rawResponse.length > 0) {
-          console.log(`📋 Raw response so far: ${rawResponse.substring(0, 100)}...`)
+          console.log(`[PARTIAL] Raw response so far: ${rawResponse.substring(0, 100)}...`)
         }
       }
     } else {
       // Weitere Body-Daten
       body += chunk.toString()
-      console.log(`📄 Additional body: ${chunk.length} chars`)
+      console.log(`[BODY] Additional body: ${chunk.length} chars`)
       res.write(chunk)
     }
   })
 
   socket.on('end', () => {
-    console.log(`✅ Connection ended`)
-    console.log(`📄 Total body length: ${body.length}`)
+    console.log(`[OK] Connection ended`)
+    console.log(`[BODY] Total body length: ${body.length}`)
 
     if (body.length > 0) {
-      console.log(`📄 Body preview: ${body.substring(0, 200)}...`)
+      console.log(`[BODY] Body preview: ${body.substring(0, 200)}...`)
     }
 
     res.end()
   })
 
   socket.on('error', (err) => {
-    console.error('❌ Socket error:', err.message)
+    console.error('[ERROR] Socket error:', err.message)
     if (!res.headersSent) {
       res.writeHead(500, {
         'Content-Type': 'text/plain',
@@ -144,7 +172,7 @@ const server = http.createServer((req, res) => {
 
   // Request timeout
   socket.setTimeout(10000, () => {
-    console.error('❌ Request timeout')
+    console.error('[ERROR] Request timeout')
     socket.destroy()
     if (!res.headersSent) {
       res.writeHead(504, {
@@ -157,23 +185,23 @@ const server = http.createServer((req, res) => {
 })
 
 server.listen(PROXY_PORT, () => {
-  console.log(`✅ AppleJuice Proxy Server läuft auf Port ${PROXY_PORT}`)
-  console.log(`🌐 Verwende: http://localhost:${PROXY_PORT}/api/...`)
+  console.log(`[OK] AppleJuice Proxy Server läuft auf Port ${PROXY_PORT}`)
+  console.log(`[INFO] Verwende: http://localhost:${PROXY_PORT}/api/...`)
 })
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down proxy server...')
+  console.log('\n[SHUTDOWN] Shutting down proxy server...')
   server.close(() => {
-    console.log('✅ Proxy server stopped')
+    console.log('[OK] Proxy server stopped')
     process.exit(0)
   })
 })
 
 process.on('SIGTERM', () => {
-  console.log('\n🛑 Shutting down proxy server...')
+  console.log('\n[SHUTDOWN] Shutting down proxy server...')
   server.close(() => {
-    console.log('✅ Proxy server stopped')
+    console.log('[OK] Proxy server stopped')
     process.exit(0)
   })
 })

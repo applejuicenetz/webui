@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
     watch: {
       usePolling: true // Wichtig für Docker: File watching
     },
-    // Proxy deaktiviert - direkte Verbindung zum AppleJuice-Server
+    // Proxy deaktiviert - verwende separaten Proxy-Server auf Port 3001
     // proxy: {}
   },
   preview: {

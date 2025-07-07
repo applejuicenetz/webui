@@ -8,168 +8,110 @@
               <CRow class="align-items-center">
                 <CCol>
                   <h4 class="mb-0">
-                    <CIcon icon="cil-folder-open" class="me-2" />
-                    Shared Files
+                    <CIcon :icon="cilFolderOpen" class="me-2" />
+                    Freigegebene Verzeichnisse
                   </h4>
                 </CCol>
                 <CCol class="text-end">
-                  <CButton color="primary" @click="refreshShares">
-                    <CIcon icon="cil-reload" class="me-1" />
-                    Refresh
-                  </CButton>
-                  <CButton color="success" class="ms-2" @click="addShare">
-                    <CIcon icon="cil-plus" class="me-1" />
-                    Add Share
+                  <CButton color="primary" @click="checkShares" :disabled="isLoading">
+                    <CSpinner v-if="isLoading" size="sm" class="me-1" />
+                    <CIcon v-else :icon="cilReload" class="me-1" />
+                    {{ $t('Share.check') }}
                   </CButton>
                 </CCol>
               </CRow>
             </CCardHeader>
             <CCardBody>
-              <CRow class="mb-3">
-                <CCol :md="6">
-                  <CInputGroup>
-                    <CFormInput 
-                      v-model="searchTerm"
-                      placeholder="Search shared files..."
-                    />
-                    <CButton color="primary" variant="outline">
-                      <CIcon icon="cil-magnifying-glass" />
-                    </CButton>
-                  </CInputGroup>
-                </CCol>
-                <CCol :md="3">
-                  <CFormSelect v-model="filterType">
-                    <option value="">All Types</option>
-                    <option value="audio">Audio</option>
-                    <option value="video">Video</option>
-                    <option value="document">Document</option>
-                    <option value="image">Image</option>
-                    <option value="other">Other</option>
-                  </CFormSelect>
-                </CCol>
-                <CCol :md="3">
-                  <CFormSelect v-model="sortBy">
-                    <option value="name">Sort by Name</option>
-                    <option value="size">Sort by Size</option>
-                    <option value="type">Sort by Type</option>
-                    <option value="date">Sort by Date</option>
-                  </CFormSelect>
-                </CCol>
-              </CRow>
-
-              <CRow class="mb-3">
-                <CCol>
-                  <CCard color="light">
-                    <CCardBody>
-                      <CRow>
-                        <CCol :sm="3">
-                          <div class="text-center">
-                            <h4 class="text-primary">{{ shareStats.totalFiles }}</h4>
-                            <small class="text-muted">Total Files</small>
-                          </div>
-                        </CCol>
-                        <CCol :sm="3">
-                          <div class="text-center">
-                            <h4 class="text-success">{{ shareStats.totalSize }}</h4>
-                            <small class="text-muted">Total Size</small>
-                          </div>
-                        </CCol>
-                        <CCol :sm="3">
-                          <div class="text-center">
-                            <h4 class="text-info">{{ shareStats.sharedDirs }}</h4>
-                            <small class="text-muted">Shared Directories</small>
-                          </div>
-                        </CCol>
-                        <CCol :sm="3">
-                          <div class="text-center">
-                            <h4 class="text-warning">{{ shareStats.requests }}</h4>
-                            <small class="text-muted">Today's Requests</small>
-                          </div>
-                        </CCol>
-                      </CRow>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-              </CRow>
-
+              <div v-if="alert.show" class="mb-3">
+                <CAlert :color="alert.type" dismissible @close="alert.show = false">
+                  <strong>{{ alert.title }}</strong> {{ alert.message }}
+                </CAlert>
+              </div>
+              
               <CTable striped hover responsive>
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell>
-                      <CFormCheck @change="toggleSelectAll" />
-                    </CTableHeaderCell>
-                    <CTableHeaderCell>Name</CTableHeaderCell>
-                    <CTableHeaderCell>Type</CTableHeaderCell>
-                    <CTableHeaderCell>Size</CTableHeaderCell>
-                    <CTableHeaderCell>Path</CTableHeaderCell>
-                    <CTableHeaderCell>Requests</CTableHeaderCell>
-                    <CTableHeaderCell>Actions</CTableHeaderCell>
+                    <CTableHeaderCell width="1"></CTableHeaderCell>
+                    <CTableHeaderCell width="70%">{{ $t('Share.directory_name') }}</CTableHeaderCell>
+                    <CTableHeaderCell>{{ $t('Share.subs') }}</CTableHeaderCell>
+                    <CTableHeaderCell width="10">{{ $t('Share.aktion') }}</CTableHeaderCell>
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
-                  <CTableRow v-for="file in filteredShares" :key="file.id">
-                    <CTableDataCell>
-                      <CFormCheck v-model="file.selected" />
+                  <!-- Temp-Verzeichnis -->
+                  <CTableRow>
+                    <CTableDataCell width="1">
+                      <CIcon :icon="cilFolder" />
+                    </CTableDataCell>
+                    <CTableDataCell colspan="3">
+                      <a :href="`index.php?site=sharefiles&dir=${encodeURIComponent(tempDirectory)}`">
+                        {{ tempDirectory }}
+                      </a>
+                    </CTableDataCell>
+                  </CTableRow>
+                  
+                  <!-- Freigegebene Verzeichnisse -->
+                  <CTableRow v-for="(dir, index) in sharedDirectories" :key="index">
+                    <CTableDataCell width="1">
+                      <CIcon :icon="cilFolder" />
                     </CTableDataCell>
                     <CTableDataCell>
-                      <div class="d-flex align-items-center">
-                        <CIcon :icon="getFileIcon(file.type)" class="me-2" />
-                        {{ file.name }}
-                      </div>
+                      <a :href="`index.php?site=sharefiles&dir=${encodeURIComponent(dir.name)}`">
+                        {{ dir.name }}
+                      </a>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <CBadge :color="getTypeColor(file.type)">
-                        {{ file.type }}
-                      </CBadge>
+                      <CFormCheck 
+                        :checked="dir.shareMode === 'subdirectory'" 
+                        @change="changeSubdirectory(dir)"
+                        :disabled="isLoading"
+                      />
                     </CTableDataCell>
-                    <CTableDataCell>{{ file.size }}</CTableDataCell>
                     <CTableDataCell>
-                      <small class="text-muted">{{ file.path }}</small>
+                      <CButton 
+                        size="sm" 
+                        color="danger" 
+                        @click="removeShare(dir)"
+                        :disabled="isLoading"
+                      >
+                        <CIcon :icon="cilTrash" />
+                      </CButton>
                     </CTableDataCell>
-                    <CTableDataCell>{{ file.requests }}</CTableDataCell>
+                  </CTableRow>
+                  
+                  <!-- Neues Verzeichnis hinzufügen -->
+                  <CTableRow>
+                    <CTableDataCell colspan="4">
+                      {{ $t('Share.shared_directories_new') }}
+                    </CTableDataCell>
+                  </CTableRow>
+                  <CTableRow>
+                    <CTableDataCell></CTableDataCell>
+                    <CTableDataCell>
+                      <CFormInput 
+                        v-model="newShare.path" 
+                        class="form-control input-sm" 
+                        :placeholder="$t('Share.way')"
+                        :disabled="isLoading"
+                      />
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <CFormCheck v-model="newShare.includeSubs" :disabled="isLoading" />
+                    </CTableDataCell>
                     <CTableDataCell>
                       <CButton 
                         size="sm" 
                         color="primary" 
-                        variant="ghost"
-                        @click="openFile(file)"
+                        @click="addNewShare"
+                        :disabled="isLoading || !newShare.path"
                       >
-                        <CIcon icon="cil-external-link" />
-                      </CButton>
-                      <CButton 
-                        size="sm" 
-                        color="danger" 
-                        variant="ghost"
-                        @click="removeShare(file)"
-                      >
-                        <CIcon icon="cil-trash" />
+                        <CSpinner v-if="isLoading" size="sm" />
+                        <CIcon v-else :icon="cilSave" />
                       </CButton>
                     </CTableDataCell>
                   </CTableRow>
                 </CTableBody>
               </CTable>
-
-              <div v-if="filteredShares.length === 0" class="text-center py-4">
-                <CIcon icon="cil-folder" size="xl" class="text-muted mb-2" />
-                <p class="text-muted">No shared files found</p>
-              </div>
-
-              <CRow v-if="selectedFiles.length > 0" class="mt-3">
-                <CCol>
-                  <CAlert color="info">
-                    {{ selectedFiles.length }} file(s) selected
-                    <CButton 
-                      size="sm" 
-                      color="danger" 
-                      variant="outline"
-                      class="ms-2"
-                      @click="removeSelectedShares"
-                    >
-                      Remove Selected
-                    </CButton>
-                  </CAlert>
-                </CCol>
-              </CRow>
             </CCardBody>
           </CCard>
         </CCol>
@@ -178,182 +120,222 @@
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useCoreStore } from '../stores/core.js'
+import { useAuthStore } from '../stores/auth.js'
+import shareService from '../services/shareService.js'
+import { 
+  CContainer, CRow, CCol, CCard, CCardHeader, CCardBody, 
+  CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
+  CButton, CFormCheck, CFormInput, CAlert, CSpinner
+} from '@coreui/vue'
+import { CIcon } from '@coreui/icons-vue'
+import { 
+  cilFolderOpen, cilReload, cilFolder, cilTrash, cilSave
+} from '@coreui/icons'
 
-export default {
-  name: 'Shares',
-  setup() {
-    const searchTerm = ref('')
-    const filterType = ref('')
-    const sortBy = ref('name')
+// Stores
+const coreStore = useCoreStore()
+const authStore = useAuthStore()
 
-    const shareStats = ref({
-      totalFiles: 1247,
-      totalSize: '45.2 GB',
-      sharedDirs: 3,
-      requests: 89
-    })
+// Reaktive Daten
+const sharedDirectories = ref([])
+const tempDirectory = ref('/temp')
+const isLoading = ref(false)
+const alert = ref({
+  show: false,
+  type: 'info',
+  title: '',
+  message: ''
+})
 
-    const shares = ref([
-      {
-        id: 1,
-        name: 'Song.mp3',
-        type: 'audio',
-        size: '4.5 MB',
-        path: 'C:\\Music\\Album\\Song.mp3',
-        requests: 15,
-        selected: false
+// Neues Share
+const newShare = ref({
+  path: '',
+  includeSubs: true
+})
+
+// Übersetzungen (Platzhalter - in einer echten Implementierung würde hier ein i18n-System verwendet)
+const $t = (key) => {
+  const translations = {
+    'Share.check': 'Überprüfen',
+    'Share.directory_name': 'Verzeichnisname',
+    'Share.subs': 'Unterverzeichnisse',
+    'Share.aktion': 'Aktion',
+    'Share.shared_directories_new': 'Neues Verzeichnis freigeben',
+    'Share.way': 'Pfad',
+    'Share.in_progress': 'In Bearbeitung',
+    'Share.set_share': 'Freigabeeinstellungen werden aktualisiert',
+    'Share.new_share': 'Verzeichnis wird freigegeben',
+    'Share.confirm_delete': 'Möchten Sie dieses Verzeichnis wirklich aus der Freigabe entfernen?'
+  }
+  return translations[key] || key
+}
+
+// Beim Laden der Komponente
+onMounted(async () => {
+  await loadSharedDirectories()
+})
+
+// Freigegebene Verzeichnisse laden
+const loadSharedDirectories = async () => {
+  try {
+    isLoading.value = true
+    
+    // Verzeichnisse vom ShareService laden
+    const directories = await shareService.getSharedDirectories()
+    sharedDirectories.value = directories
+    
+    // Temp-Verzeichnis laden
+    tempDirectory.value = await shareService.getTempDirectory()
+    
+    console.log('Freigegebene Verzeichnisse geladen:', directories)
+    console.log('Temp-Verzeichnis:', tempDirectory.value)
+    
+  } catch (error) {
+    console.error('Fehler beim Laden der freigegebenen Verzeichnisse:', error)
+    showAlert('danger', 'Fehler:', error.message)
+    
+    // Fallback: Beispieldaten verwenden
+    sharedDirectories.value = [
+      { 
+        name: 'C:\\Musik', 
+        shareMode: 'subdirectory' 
       },
-      {
-        id: 2,
-        name: 'Movie.mkv',
-        type: 'video',
-        size: '1.2 GB',
-        path: 'C:\\Videos\\Movie.mkv',
-        requests: 8,
-        selected: false
+      { 
+        name: 'C:\\Filme', 
+        shareMode: 'directory' 
       },
-      {
-        id: 3,
-        name: 'Document.pdf',
-        type: 'document',
-        size: '2.1 MB',
-        path: 'C:\\Documents\\Document.pdf',
-        requests: 3,
-        selected: false
-      },
-      {
-        id: 4,
-        name: 'Photo.jpg',
-        type: 'image',
-        size: '850 KB',
-        path: 'C:\\Images\\Photo.jpg',
-        requests: 12,
-        selected: false
-      },
-      {
-        id: 5,
-        name: 'Archive.zip',
-        type: 'other',
-        size: '15.3 MB',
-        path: 'C:\\Files\\Archive.zip',
-        requests: 5,
-        selected: false
+      { 
+        name: 'C:\\Dokumente', 
+        shareMode: 'subdirectory' 
       }
-    ])
+    ]
+    tempDirectory.value = 'C:\\AppleJuice\\Temp'
+  } finally {
+    isLoading.value = false
+  }
+}
 
-    const filteredShares = computed(() => {
-      let filtered = shares.value
+// Unterverzeichnisse ein-/ausschalten
+const changeSubdirectory = async (directory) => {
+  try {
+    isLoading.value = true
+    
+    const newMode = directory.shareMode === 'subdirectory' ? 'directory' : 'subdirectory'
+    const includeSubdirectories = newMode === 'subdirectory'
+    
+    // ShareService verwenden
+    await shareService.changeSubdirectory(directory.name, includeSubdirectories)
+    
+    // Lokale Daten aktualisieren
+    directory.shareMode = newMode
+    
+    showAlert('info', $t('Share.in_progress'), $t('Share.set_share'))
+  } catch (error) {
+    console.error('Fehler beim Ändern der Unterverzeichniseinstellungen:', error)
+    showAlert('danger', 'Fehler:', error.message)
+  } finally {
+    isLoading.value = false
+  }
+}
 
-      if (searchTerm.value) {
-        filtered = filtered.filter(file => 
-          file.name.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-          file.path.toLowerCase().includes(searchTerm.value.toLowerCase())
-        )
+// Verzeichnis aus der Freigabe entfernen
+const removeShare = async (directory) => {
+  // Bestätigungsdialog anzeigen
+  const confirmMessage = $t('Share.confirm_delete')
+  const isConfirmed = window.confirm(confirmMessage)
+  
+  if (isConfirmed) {
+    try {
+      isLoading.value = true
+      
+      // ShareService verwenden
+      await shareService.removeShare(directory.name)
+      
+      // Lokale Daten aktualisieren
+      const index = sharedDirectories.value.findIndex(d => d.name === directory.name)
+      if (index !== -1) {
+        sharedDirectories.value.splice(index, 1)
       }
-
-      if (filterType.value) {
-        filtered = filtered.filter(file => file.type === filterType.value)
-      }
-
-      // Sort files
-      filtered.sort((a, b) => {
-        switch (sortBy.value) {
-          case 'name':
-            return a.name.localeCompare(b.name)
-          case 'size':
-            return parseFloat(a.size) - parseFloat(b.size)
-          case 'type':
-            return a.type.localeCompare(b.type)
-          case 'date':
-            return new Date(b.date) - new Date(a.date)
-          default:
-            return 0
-        }
-      })
-
-      return filtered
-    })
-
-    const selectedFiles = computed(() => 
-      shares.value.filter(file => file.selected)
-    )
-
-    const getFileIcon = (type) => {
-      switch (type) {
-        case 'audio': return 'cil-music-note'
-        case 'video': return 'cil-video'
-        case 'document': return 'cil-description'
-        case 'image': return 'cil-image'
-        default: return 'cil-file'
-      }
-    }
-
-    const getTypeColor = (type) => {
-      switch (type) {
-        case 'audio': return 'success'
-        case 'video': return 'primary'
-        case 'document': return 'info'
-        case 'image': return 'warning'
-        default: return 'secondary'
-      }
-    }
-
-    const toggleSelectAll = (event) => {
-      const checked = event.target.checked
-      filteredShares.value.forEach(file => {
-        file.selected = checked
-      })
-    }
-
-    const refreshShares = () => {
-      // Implement refresh logic
-      console.log('Refreshing shares...')
-    }
-
-    const addShare = () => {
-      // Implement add share logic
-      console.log('Adding new share...')
-    }
-
-    const openFile = (file) => {
-      // Implement open file logic
-      console.log('Opening file:', file.name)
-    }
-
-    const removeShare = (file) => {
-      if (confirm(`Remove "${file.name}" from shares?`)) {
-        const index = shares.value.findIndex(s => s.id === file.id)
-        if (index > -1) {
-          shares.value.splice(index, 1)
-        }
-      }
-    }
-
-    const removeSelectedShares = () => {
-      if (confirm(`Remove ${selectedFiles.value.length} selected file(s) from shares?`)) {
-        shares.value = shares.value.filter(file => !file.selected)
-      }
-    }
-
-    return {
-      searchTerm,
-      filterType,
-      sortBy,
-      shareStats,
-      shares,
-      filteredShares,
-      selectedFiles,
-      getFileIcon,
-      getTypeColor,
-      toggleSelectAll,
-      refreshShares,
-      addShare,
-      openFile,
-      removeShare,
-      removeSelectedShares
+      
+      showAlert('success', 'Erfolg:', 'Verzeichnis wurde aus der Freigabe entfernt')
+    } catch (error) {
+      console.error('Fehler beim Entfernen des Verzeichnisses:', error)
+      showAlert('danger', 'Fehler:', error.message)
+    } finally {
+      isLoading.value = false
     }
   }
+}
+
+// Neues Verzeichnis freigeben
+const addNewShare = async () => {
+  if (!newShare.value.path) {
+    showAlert('warning', 'Warnung:', 'Bitte geben Sie einen Pfad an')
+    return
+  }
+  
+  try {
+    isLoading.value = true
+    
+    // ShareService verwenden
+    await shareService.addShare(newShare.value.path, newShare.value.includeSubs)
+    
+    // Lokale Daten aktualisieren
+    sharedDirectories.value.push({
+      name: newShare.value.path,
+      shareMode: newShare.value.includeSubs ? 'subdirectory' : 'directory'
+    })
+    
+    // Formular zurücksetzen
+    newShare.value.path = ''
+    
+    showAlert('info', $t('Share.in_progress'), $t('Share.new_share'))
+  } catch (error) {
+    console.error('Fehler beim Hinzufügen des Verzeichnisses:', error)
+    showAlert('danger', 'Fehler:', error.message)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Shares überprüfen
+const checkShares = async () => {
+  try {
+    isLoading.value = true
+    
+    // ShareService verwenden
+    await shareService.checkShares()
+    
+    showAlert('info', 'Information:', 'Überprüfung der Freigaben wurde gestartet')
+    
+    // Nach einer kurzen Verzögerung die Verzeichnisse neu laden
+    setTimeout(async () => {
+      await loadSharedDirectories()
+    }, 1000)
+    
+  } catch (error) {
+    console.error('Fehler beim Überprüfen der Freigaben:', error)
+    showAlert('danger', 'Fehler:', error.message)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Alert anzeigen
+const showAlert = (type, title, message) => {
+  alert.value = {
+    show: true,
+    type,
+    title,
+    message
+  }
+  
+  // Alert nach 5 Sekunden automatisch ausblenden
+  setTimeout(() => {
+    alert.value.show = false
+  }, 5000)
 }
 </script>
