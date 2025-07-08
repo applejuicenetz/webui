@@ -35,7 +35,7 @@ COPY server.js ./
 COPY start-services.sh ./
 
 # Production start script inline erstellen (falls externe Datei fehlt)
-RUN echo '#!/bin/bash' > start-services-inline.sh && \
+RUN echo '#!/bin/sh' > start-services-inline.sh && \
     echo 'set -e' >> start-services-inline.sh && \
     echo '' >> start-services-inline.sh && \
     echo 'echo "[START] Starting AppleJuice WebUI Service..."' >> start-services-inline.sh && \
