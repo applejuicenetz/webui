@@ -33,7 +33,7 @@ class CoreService {
       throw error
     }
   }
-  
+
   /**
    * Modified.xml parsen (spezielle Behandlung)
    * @param {string} xmlString - XML-String
@@ -42,13 +42,13 @@ class CoreService {
   parseModifiedXml(xmlString) {
     try {
       console.log('[CORE] Parsing Modified.xml')
-      
+
       // Spezielle Behandlung für Modified.xml (meist Attribute-basiert)
       const informationMatch = xmlString.match(/<information\s+([^>]+)>/i)
       const networkInfoMatch = xmlString.match(/<networkinfo\s+([^>]+)>/i)
       const welcomeMatch = xmlString.match(/<welcomemessage>\s*(.*?)\s*<\/welcomemessage>/is)
       const serverMatches = xmlString.match(/<server\s+([^>]+)\/>/gi)
-      
+
       let extractedData = {
         information: {},
         networkInfo: {},
@@ -56,29 +56,29 @@ class CoreService {
         welcomeMessage: null,
         rawData: xmlString
       }
-      
+
       // Information-Attribute extrahieren
       if (informationMatch) {
         extractedData.information = this.parseXmlAttributes(informationMatch[1])
         console.log('[CORE] Extracted information attributes:', extractedData.information)
       }
-      
+
       // NetworkInfo-Attribute extrahieren
       if (networkInfoMatch) {
         extractedData.networkInfo = this.parseXmlAttributes(networkInfoMatch[1])
       }
-      
+
       // Willkommensnachricht extrahieren
       if (welcomeMatch) {
         extractedData.welcomeMessage = welcomeMatch[1].trim()
       }
-      
+
       // Server-Liste extrahieren
       if (serverMatches) {
         extractedData.servers = serverMatches.map(serverMatch => {
           const attributeString = serverMatch.match(/<server\s+([^>]+)\/>/i)[1]
           const attributes = this.parseXmlAttributes(attributeString)
-          
+
           return {
             id: parseInt(attributes.id) || 0,
             name: attributes.name || 'Unnamed Server',
@@ -89,7 +89,7 @@ class CoreService {
           }
         })
       }
-      
+
       console.log('[CORE] Modified.xml parsed successfully')
       return extractedData
     } catch (error) {
@@ -97,7 +97,7 @@ class CoreService {
       return null
     }
   }
-  
+
   /**
    * XML-Attribute Parser Hilfsfunktion
    */
@@ -105,11 +105,11 @@ class CoreService {
     const attributes = {}
     const regex = /(\w+)="([^"]*)"/g
     let match
-    
+
     while ((match = regex.exec(attributeString)) !== null) {
       attributes[match[1]] = match[2]
     }
-    
+
     return attributes
   }
 
@@ -353,7 +353,7 @@ class CoreService {
           stats.downloads.active = parseInt(modified.information.downloadsRunning) || 0
           console.log('[CORE] Found downloadsRunning:', modified.information.downloadsRunning)
         }
-        
+
         // Hardcoded Testwerte für Debugging
         if (stats.downloads.total === 0) {
           console.log('[CORE] Using test values for downloads')
@@ -380,7 +380,7 @@ class CoreService {
           stats.uploads.active = parseInt(modified.information.uploadCount) || 0
           console.log('[CORE] Found uploadCount:', modified.information.uploadCount)
         }
-        
+
         // Hardcoded Testwerte für Debugging
         if (stats.uploads.active === 0) {
           console.log('[CORE] Using test values for uploads')
@@ -422,10 +422,10 @@ class CoreService {
       // Credits aus modified.xml
       if (modified?.INFORMATION?.credits) {
         const credits = parseInt(modified.INFORMATION.credits)
-        stats.credits = this.formatBytes(Math.abs(credits)) + (credits < 0 ? ' (Schulden)' : '')
+        stats.credits = this.formatBytes(Math.abs(credits)) + (credits < 0 ? '-' : '')
       } else if (modified?.information?.credits !== undefined) {
         const credits = parseInt(modified.information.credits)
-        stats.credits = this.formatBytes(Math.abs(credits)) + (credits < 0 ? ' (Schulden)' : '')
+        stats.credits = this.formatBytes(Math.abs(credits)) + (credits < 0 ? '-' : '')
       }
 
       // Versuche, Traffic-Informationen aus modified.xml zu extrahieren
@@ -862,7 +862,7 @@ class CoreService {
   /**
    * Automatische Updates starten
    */
-  startAutoUpdate(interval = 30000) {
+  startAutoUpdate(interval = 5000) {
     if (this.updateInterval) {
       clearInterval(this.updateInterval)
     }

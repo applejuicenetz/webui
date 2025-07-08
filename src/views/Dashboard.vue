@@ -74,11 +74,11 @@ const refreshData = async () => {
   try {
     error.value = null
     await coreStore.refresh()
-    
+
     // Testwerte aktualisieren
     downloadStats.active = Math.floor(Math.random() * (downloadStats.total + 1))
     uploadStats.active = Math.floor(Math.random() * 3)
-    
+
     lastUpdateTime.value = new Date()
     console.log('[DASHBOARD] Refreshed with test values:', downloadStats, uploadStats)
   } catch (err) {
@@ -99,7 +99,7 @@ const initializeData = async () => {
     console.log('[DASHBOARD] Loading core data...')
     await coreStore.loadCoreData()
     console.log('[DASHBOARD] Core data loaded:', coreStore.coreData)
-    
+
     // Testwerte initialisieren
     downloadStats.active = 2
     downloadStats.total = 5
@@ -107,7 +107,7 @@ const initializeData = async () => {
     console.log('[DASHBOARD] Test values initialized:', downloadStats, uploadStats)
 
     // Start auto-update with 5 second interval (schnellere Updates für bessere Reaktionszeit)
-    coreStore.startAutoUpdate(5000)
+    coreStore.startAutoUpdate(1000)
 
     lastUpdateTime.value = new Date()
   } catch (err) {
@@ -151,18 +151,7 @@ onUnmounted(() => {
                       aktueller Server
                     </div>
                     <div class="d-flex align-items-center">
-                      <CButton
-                        :disabled="isLoading"
-                        @click="refreshData"
-                        variant="outline"
-                        color="primary"
-                        size="sm"
-                        class="me-1"
-                      >
-                        <CSpinner v-if="isLoading" size="sm" class="me-1" />
-                        <CIcon v-else :icon="cilReload" class="me-1" />
 
-                      </CButton>
                     </div>
                   </CCardHeader>
                   <CCardBody>
@@ -201,10 +190,6 @@ onUnmounted(() => {
                            aria-valuemin="0"
                            :aria-valuemax="downloadStats.total"></div>
                     </div>
-                    <div v-if="isLoading" class="small text-muted mt-1">
-                      <CSpinner size="sm" class="me-1" />
-                      Lade...
-                    </div>
                   </CCardBody>
                 </CCard>
               </div>
@@ -224,10 +209,6 @@ onUnmounted(() => {
                            :aria-valuenow="uploadStats.active"
                            aria-valuemin="0"
                            aria-valuemax="10"></div>
-                    </div>
-                    <div v-if="isLoading" class="small text-muted mt-1">
-                      <CSpinner size="sm" class="me-1" />
-                      Lade...
                     </div>
                   </CCardBody>
                 </CCard>
@@ -261,7 +242,7 @@ onUnmounted(() => {
                       <CIcon :icon="cilBank" class="icon-xxl" />
                     </div>
                     <div class="fs-4 fw-semibold">
-                      <span :class="coreData.statistics.credits.includes('-') ? 'text-danger' : 'text-success'">
+                      <span :class="coreData.statistics.credits.includes('-') ? 'text-danger' : 'text-warning'">
                         {{ coreData.statistics.credits }}
                       </span>
                     </div>
@@ -270,15 +251,15 @@ onUnmounted(() => {
                       <div v-if="!coreData.statistics.credits.includes('-')"
                            class="progress-bar bg-success"
                            role="progressbar"
-                           style="width: 50%"
-                           aria-valuenow="50"
+                           style="width: 0%"
+                           aria-valuenow="0"
                            aria-valuemin="0"
                            aria-valuemax="100"></div>
                       <div v-else
                            class="progress-bar bg-danger"
                            role="progressbar"
-                           style="width: 50%"
-                           aria-valuenow="50"
+                           style="width: 0"
+                           aria-valuenow="0"
                            aria-valuemin="0"
                            aria-valuemax="100"></div>
                     </div>
@@ -403,18 +384,6 @@ onUnmounted(() => {
           </CCardBody>
         </CCard>
 
-        <!-- Server Willkommensnachricht -->
-        <CCard v-if="coreData.networkInfo.welcomeMessage" class="mb-4">
-          <CCardHeader>
-            <CIcon :icon="cilNewspaper" class="me-2" />
-            Server Nachricht
-          </CCardHeader>
-          <CCardBody>
-            <div class="alert alert-info mb-0">
-              {{ coreData.networkInfo.welcomeMessage }}
-            </div>
-          </CCardBody>
-        </CCard>
       </CCol>
     </CRow>
 

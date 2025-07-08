@@ -3,6 +3,7 @@ import { CContainer } from '@coreui/vue'
 import AppFooter from '../components/AppFooter.vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppSidebar from '../components/AppSidebar.vue'
+import AppToast from '../components/AppToast.vue'
 </script>
 
 <template>
@@ -17,5 +18,7 @@ import AppSidebar from '../components/AppSidebar.vue'
       </div>
       <AppFooter />
     </div>
+    <!-- Toast-Benachrichtigungen -->
+    <AppToast />
   </div>
 </template>
