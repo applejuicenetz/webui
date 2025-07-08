@@ -11,16 +11,16 @@
               </h4>
               <div>
                 <CBadge color="primary" class="me-2">
-                  {{ downloads.filter(d => d.status === 'downloading').length }} aktiv
+                  {{ downloads.filter(d => ['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(d.status)).length }} aktiv
                 </CBadge>
                 <CBadge color="success" class="me-2">
-                  {{ downloads.filter(d => d.status === 'completed').length }} abgeschlossen
+                  {{ downloads.filter(d => d.status === '14' || d.status === 'completed').length }} abgeschlossen
                 </CBadge>
                 <CBadge color="warning" class="me-2">
-                  {{ downloads.filter(d => d.status === 'paused').length }} pausiert
+                  {{ downloads.filter(d => d.status === '18' || d.status === 'paused').length }} pausiert
                 </CBadge>
-                <CBadge color="info">
-                  {{ downloads.filter(d => d.status === 'waiting').length }} wartend
+                <CBadge color="danger" class="me-2">
+                  {{ downloads.filter(d => ['1', '13', '15', '17', 'failed'].includes(d.status)).length }} fehler
                 </CBadge>
               </div>
             </CCardHeader>
@@ -49,66 +49,96 @@
                 <strong>Fehler:</strong> {{ error }}
               </div>
 
-              <CTable striped hover responsive>
-                <CTableHead>
-                  <CTableRow>
-                    <CTableHeaderCell>Dateiname</CTableHeaderCell>
-                    <CTableHeaderCell>Status</CTableHeaderCell>
-                    <CTableHeaderCell>Fortschritt</CTableHeaderCell>
-                    <CTableHeaderCell>PDL</CTableHeaderCell>
-                    <CTableHeaderCell>Geschwindigkeit</CTableHeaderCell>
-                    <CTableHeaderCell>Aktionen</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  <CTableRow v-for="download in filteredDownloads" :key="download.id">
-                    <CTableDataCell>
-                      <div class="fw-semibold">{{ download.fileName }}</div>
-                     {{ download.sources }} | {{ download.size }}
-                    </CTableDataCell>
-                    <CTableDataCell><CBadge :color="getStatusColor(download.status)">
-                        {{ getStatusText(download.status) }}
-                      </CBadge></CTableDataCell>
-                    <CTableDataCell style="min-width: 150px">
-                      <div class="d-flex align-items-center">
-                        <div class="me-2" style="width: 40px">{{ download.progress }}%</div>
-                        <CProgress
-                          :value="download.progress"
-                          class="flex-grow-1"
-                          :color="getProgressColor(download.status)"
-                        />
-                      </div>
-                    </CTableDataCell>
-                    <CTableDataCell>
+              <div class="table-responsive">
+                <table class="table border mb-0">
+                  <thead class="fw-semibold text-nowrap">
+                    <tr class="align-middle">
+                      <th class="bg-body-secondary"></th>
+                      <th class="bg-body-secondary">Dateiennamen</th>
+                      <th class="bg-body-secondary">Status</th>
+                      <th class="bg-body-secondary">Fortschritt</th>
+                      <th class="bg-body-secondary text-center">PDL</th>
+                      <th class="bg-body-secondary">Geschwindigkeit</th>
+                      <th class="bg-body-secondary">ETA</th>
+                      <th class="bg-body-secondary"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="download in filteredDownloads" :key="download.id" class="align-middle">
+                      <td>
+                        <input class="form-check-input" type="checkbox" :id="'dlcheck_' + download.id">
+                      </td>
+                      <td>
+                        <div class="text-nowrap">
+                          <a @click="renameDownload(download)" title="Umbenennen">
+                            {{ download.fileName.length > 40 ? download.fileName.substring(0, 40) + '...' : download.fileName }}
+                          </a>
+                        </div>
+                        <div class="small text-body-secondary text-nowrap">
+                          <span>
+                            <a title="Mehr Info">
+                              {{ download.sources }}/{{ download.sources }}
+                            </a>
+                          </span> | {{ download.size }}
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge" :class="'bg-' + getStatusColor(download.status)">
+                          {{ getStatusText(download.status) }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="d-flex justify-content-between align-items-baseline">
+                          <div class="fw-semibold">{{ download.progress }}%</div>
+                          <div class="text-nowrap small text-body-secondary ms-3">
+                            {{ formatBytes(download.rawSize - download.loaded) }}
+                          </div>
+                        </div>
+                        <div class="progress progress-thin">
+                          <div class="progress-bar"
+                               :class="'bg-' + getProgressColor(download.status)"
+                               role="progressbar"
+                               :style="'width: ' + download.progress + '%'"
+                               :aria-valuenow="download.progress"
+                               aria-valuemin="0"
+                               aria-valuemax="100">
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-center">
+                        <CBadge color="primary">{{ download.powerdownload || 0 }}</CBadge>
+                      </td>
+                      <td>
+                        {{ download.speed }}
+                      </td>
+                      <td>
+                        {{ download.eta }}
+                      </td>
+                      <td>
+                        <div class="d-flex gap-1">
+                          <CButton size="sm" color="light" @click.prevent="showDownloadInfo(download)" title="Info">
+                            <CIcon :icon="cilInfo" />
+                          </CButton>
+                          <CButton
+                            size="sm"
+                            :color="['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(download.status) ? 'warning' : 'success'"
+                            @click.prevent="pauseResume(download)"
+                            :disabled="['14', 'completed', '1', '13', '15', '17', 'failed'].includes(download.status)"
+                            :title="['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(download.status) ? 'Pausieren' : 'Fortsetzen'"
+                          >
+                            <CIcon :icon="['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(download.status) ? cilMediaPause : cilMediaPlay" />
+                          </CButton>
+                          <CButton size="sm" color="danger" @click.prevent="cancelDownload(download)" title="Löschen">
+                            <CIcon :icon="cilX" />
+                          </CButton>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-                    </CTableDataCell>
-                    <CTableDataCell>{{ download.speed }}</CTableDataCell>
-                    <CTableDataCell>{{ download.eta }}</CTableDataCell>
-                    <CTableDataCell>
-                      <CButton
-                        size="sm"
-                        :color="download.status === 'downloading' ? 'warning' : 'primary'"
-                        variant="ghost"
-                        @click="pauseResume(download)"
-                        :disabled="download.status === 'completed'"
-                        class="me-1"
-                      >
-                        <CIcon :icon="download.status === 'downloading' ? cilMediaPause : cilMediaPlay" />
-                      </CButton>
-                      <CButton
-                        size="sm"
-                        color="danger"
-                        variant="ghost"
-                        @click="cancelDownload(download)"
-                      >
-                        <CIcon :icon="cilX" />
-                      </CButton>
-                    </CTableDataCell>
-                  </CTableRow>
-                </CTableBody>
-              </CTable>
-
-              <div v-if="filteredDownloads.length === 0" class="text-center py-4">
+              <div v-if="filteredDownloads.length === 0" class="text-center py-4 border rounded mt-3">
                 <CIcon :icon="cilInbox" size="xl" class="text-muted mb-2" />
                 <p class="text-muted">Keine Downloads gefunden</p>
                 <CButton color="primary" @click="showAddDownloadModal = true">
@@ -129,9 +159,13 @@
     @close="showAddDownloadModal = false"
     title="Neuen Download hinzufügen"
     size="lg"
+    backdrop="static"
   >
     <CModalHeader>
-      <CModalTitle>Neuen Download hinzufügen</CModalTitle>
+      <CModalTitle>
+        <CIcon :icon="cilPlus" class="me-2" />
+        Neuen Download hinzufügen
+      </CModalTitle>
     </CModalHeader>
     <CModalBody>
       <CForm @submit.prevent="addDownload(newDownloadUrl)">
@@ -142,10 +176,14 @@
             v-model="newDownloadUrl"
             placeholder="ajfsp://file|..."
             required
+            autofocus
           />
         </CInputGroup>
         <div class="small text-muted mb-3">
           Unterstützte Formate: ajfsp://, http://, https://
+        </div>
+        <div v-if="error" class="alert alert-danger">
+          {{ error }}
         </div>
       </CForm>
     </CModalBody>
@@ -154,7 +192,206 @@
         Abbrechen
       </CButton>
       <CButton color="primary" @click="addDownload(newDownloadUrl)" :disabled="!newDownloadUrl">
+        <CIcon :icon="cilCloudDownload" class="me-1" />
         Download starten
+      </CButton>
+    </CModalFooter>
+  </CModal>
+
+  <!-- Modal für Download-Informationen -->
+  <CModal
+    id="info-modal"
+    :visible="showInfoModal"
+    @close="showInfoModal = false"
+    title="Download-Informationen"
+    size="xl"
+    backdrop="static"
+  >
+    <CModalHeader>
+      <CModalTitle>
+        <CIcon :icon="cilInfo" class="me-2" />
+        Download-Informationen: {{ selectedDownload ? selectedDownload.fileName : '' }}
+      </CModalTitle>
+    </CModalHeader>
+    <CModalBody>
+      <div v-if="selectedDownload" class="table-responsive">
+        <table class="table border mb-0">
+          <thead class="fw-semibold text-nowrap">
+            <tr class="align-middle">
+              <th class="bg-body-secondary">Dateiennamen</th>
+              <th class="bg-body-secondary">Status</th>
+              <th class="bg-body-secondary">Fortschritt</th>
+              <th class="bg-body-secondary text-center">PDL</th>
+              <th class="bg-body-secondary">Geschwindigkeit</th>
+              <th class="bg-body-secondary"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Hauptdownload-Zeile -->
+            <tr>
+              <td>
+                <div class="text-nowrap">
+                  {{ selectedDownload.fileName.length > 40 ? selectedDownload.fileName.substring(0, 40) + '...' : selectedDownload.fileName }}
+                </div>
+                <div class="small text-body-secondary text-nowrap">
+                  <span>{{ selectedDownload.sources }}/{{ selectedDownload.sources }}</span> | {{ selectedDownload.size }}
+                </div>
+              </td>
+              <td class="text-center">
+                <span class="badge" :class="'bg-' + getStatusColor(selectedDownload.status)">
+                  {{ getStatusText(selectedDownload.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex justify-content-between align-items-baseline">
+                  <div class="fw-semibold">{{ selectedDownload.progress }}%</div>
+                  <div class="text-nowrap small text-body-secondary ms-3">- {{ selectedDownload.eta }}</div>
+                </div>
+                <div class="progress progress-thin">
+                  <div class="progress-bar"
+                       :class="'bg-' + getProgressColor(selectedDownload.status)"
+                       role="progressbar"
+                       :style="'width: ' + selectedDownload.progress + '%'"
+                       :aria-valuenow="selectedDownload.progress"
+                       aria-valuemin="0"
+                       aria-valuemax="100">
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">
+                {{ selectedDownload.sources }}
+              </td>
+              <td>
+                {{ selectedDownload.speed }}
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <CButton size="sm" color="light" @click.prevent="renameDownload(selectedDownload)" title="Umbenennen">
+                    <CIcon :icon="cilPencil" />
+                  </CButton>
+                  <CButton
+                    size="sm"
+                    :color="['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(selectedDownload.status) ? 'warning' : 'success'"
+                    @click.prevent="pauseResume(selectedDownload)"
+                    :disabled="['14', 'completed', '1', '13', '15', '17', 'failed'].includes(selectedDownload.status)"
+                    :title="['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(selectedDownload.status) ? 'Pausieren' : 'Fortsetzen'"
+                  >
+                    <CIcon :icon="['0', '0_1', '0_2', '12', '16', 'downloading', 'waiting'].includes(selectedDownload.status) ? cilMediaPause : cilMediaPlay" />
+                  </CButton>
+                  <CButton size="sm" color="danger" @click.prevent="cancelDownload(selectedDownload)" title="Löschen">
+                    <CIcon :icon="cilX" />
+                  </CButton>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Aktive Quellen -->
+            <tr v-for="(source, index) in activeSources" :key="'active-' + index">
+              <td>
+                <div class="text-nowrap">
+                  <CIcon :icon="cilArrowThickFromLeft" />
+                  <CIcon :icon="cilMediaPlay" class="me-1" />
+                  {{ source.filename || '...' }}
+                </div>
+                <div class="small text-body-secondary text-nowrap ms-5">
+                  <span>User: <a href="#">{{ source.nickname || '?' }}</a></span> | {{ formatBytes(source.downloadedBytes || 0) }}
+                </div>
+              </td>
+              <td class="text-center">Übertrage</td>
+              <td>
+                <div class="d-flex justify-content-between align-items-baseline">
+                  <div class="fw-semibold">{{ source.progress || 0 }}%</div>
+                  <div class="text-nowrap small text-body-secondary ms-3"></div>
+                </div>
+                <div class="progress progress-thin">
+                  <div class="progress-bar bg-success"
+                       role="progressbar"
+                       :style="'width: ' + (source.progress || 0) + '%'"
+                       :aria-valuenow="source.progress || 0"
+                       aria-valuemin="0"
+                       aria-valuemax="100">
+                  </div>
+                </div>
+              </td>
+              <td class="text-center">1</td>
+              <td>{{ formatBytes(source.speed || 0) }}/s</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <CButton size="sm" color="light" title="Info">
+                    <CIcon :icon="cilInfo" />
+                  </CButton>
+                  <CButton size="sm" color="light" title="Edit">
+                    <CIcon :icon="cilPencil" />
+                  </CButton>
+                  <CButton size="sm" color="danger" title="Delete">
+                    <CIcon :icon="cilX" />
+                  </CButton>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Warteschlange Header -->
+            <tr v-if="queuedSources.length > 0">
+              <td colspan="9">
+                <a href="#" @click.prevent>
+                  <CIcon :icon="cilMinus" />
+                  <b>Warteschlange</b> ({{ queuedSources.length }})
+                </a>
+              </td>
+            </tr>
+
+            <!-- Rest Header -->
+            <tr v-if="inactiveSources.length > 0">
+              <td colspan="9">
+                <a href="#" @click.prevent>
+                  <CIcon :icon="cilMinus" />
+                  <b>Rest</b> ({{ inactiveSources.length }})
+                </a>
+              </td>
+            </tr>
+
+            <tr v-if="inactiveSources.length > 0">
+              <td colspan="2"></td>
+              <td colspan="3">Quelle von</td>
+            </tr>
+
+            <!-- Inaktive Quellen -->
+            <tr v-for="(source, index) in inactiveSources" :key="'inactive-' + index">
+              <td>
+                <div class="text-nowrap">
+                  <CIcon :icon="cilArrowThickFromLeft" />
+                  <CIcon :icon="cilMediaPause" class="me-1" />
+                  {{ source.filename || '...' }}
+                </div>
+                <div class="small text-body-secondary text-nowrap ms-5">
+                  <span>User: <a href="#">{{ source.nickname || '?' }}</a></span> | {{ formatBytes(source.downloadedBytes || 0) }}
+                </div>
+              </td>
+              <td class="text-center">Eigenes Limit erreicht</td>
+              <td>Server</td>
+              <td class="text-center">1</td>
+              <td>0 B/s</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <CButton size="sm" color="light" title="Info">
+                    <CIcon :icon="cilInfo" />
+                  </CButton>
+                  <CButton size="sm" color="light" title="Edit">
+                    <CIcon :icon="cilPencil" />
+                  </CButton>
+                  <CButton size="sm" color="danger" title="Delete">
+                    <CIcon :icon="cilX" />
+                  </CButton>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </CModalBody>
+    <CModalFooter>
+      <CButton color="secondary" @click="showInfoModal = false">
+        Schließen
       </CButton>
     </CModalFooter>
   </CModal>
@@ -177,8 +414,11 @@ import {
 import { CIcon } from '@coreui/icons-vue'
 import {
   cilCloudDownload, cilReload, cilMagnifyingGlass, cilPlus,
-  cilMediaPause, cilMediaPlay, cilX, cilInbox
+  cilMediaPause, cilMediaPlay, cilX, cilInbox, cilOptions,
+  cilPencil, cilInfo, cilArrowThickFromLeft, cilMinus, cilPlus as cilPlusIcon
 } from '@coreui/icons'
+
+// Wir verwenden CoreUI-Icons anstelle von SVG-Dateien
 
 const router = useRouter()
 const coreStore = useCoreStore()
@@ -189,52 +429,147 @@ const searchTerm = ref('')
 const isLoading = ref(false)
 const error = ref(null)
 const showAddDownloadModal = ref(false)
+const showInfoModal = ref(false)
 const newDownloadUrl = ref('')
+const selectedDownload = ref(null)
 
 // Downloads aus dem Core
 const downloads = ref([])
 
-// Gefilterte Downloads basierend auf Suchbegriff
+// Quellen für den ausgewählten Download
+const activeSources = ref([])
+const queuedSources = ref([])
+const inactiveSources = ref([])
+
+// Gefilterte Downloads basierend auf Suchbegriff und sortiert nach Status
 const filteredDownloads = computed(() => {
-  if (!searchTerm.value) return downloads.value
-  return downloads.value.filter(download =>
-    download.fileName.toLowerCase().includes(searchTerm.value.toLowerCase())
-  )
+  // Filtere Downloads basierend auf Suchbegriff
+  const filtered = !searchTerm.value 
+    ? downloads.value 
+    : downloads.value.filter(download =>
+        download.fileName.toLowerCase().includes(searchTerm.value.toLowerCase())
+      )
+  
+  // Sortiere Downloads nach Status
+  return filtered.sort((a, b) => {
+    // Definiere Prioritäten für verschiedene Status
+    const statusPriority = {
+      // Aktive Downloads zuerst
+      '0': 1,      // Suchen/Laden
+      '0_1': 2,    // Suchen
+      '0_2': 3,    // Übertrage
+      'downloading': 3, // Übertrage (alt)
+      'waiting': 2,     // Suchen (alt)
+      
+      // Dann Downloads mit speziellen Status
+      '16': 4,     // Erstelle .data
+      '12': 5,     // Fertigstellen...
+      
+      // Dann pausierte Downloads
+      '18': 6,     // Pausiert
+      'paused': 6, // Pausiert (alt)
+      
+      // Dann Downloads mit Fehlern
+      '1': 7,      // Platte voll
+      '13': 8,     // Fehler beim Fertigstellen
+      '15': 9,     // Abbrechen...
+      
+      // Dann abgebrochene Downloads
+      '17': 10,    // Abgebrochen
+      'failed': 10, // Abgebrochen (alt)
+      
+      // Dann fertige Downloads
+      '14': 11,    // Fertig
+      'completed': 11 // Fertig (alt)
+    }
+    
+    // Hole die Priorität für jeden Status, oder setze auf 100 wenn unbekannt
+    const priorityA = statusPriority[a.status] || 100
+    const priorityB = statusPriority[b.status] || 100
+    
+    // Sortiere nach Priorität (aufsteigend)
+    return priorityA - priorityB
+  })
 })
 
 // Status-Farbe basierend auf Download-Status
 const getStatusColor = (status) => {
+  // Debug-Log für den Status
+  console.log(`getStatusColor aufgerufen mit Status: ${status}`)
+  
   switch (status) {
-    case 'completed': return 'success'
-    case 'downloading': return 'primary'
-    case 'paused': return 'warning'
-    case 'failed': return 'danger'
-    case 'waiting': return 'info'
+    // Aktive Downloads
+    case '0':      return 'info'     // Suchen/Laden
+    case '0_1':    return 'primary'  // Suchen
+    case '0_2':    return 'info'     // Übertrage
+    case '16':     return 'info'     // Erstelle .data
+    case '12':     return 'info'     // Fertigstellen...
+    
+    // Fertige Downloads
+    case '14':     return 'success'  // Fertig
+    
+    // Pausierte Downloads
+    case '18':     return 'warning'  // Pausiert
+    
+    // Downloads mit Fehlern
+    case '1':      return 'danger'   // Platte voll
+    case '13':     return 'danger'   // Fehler beim Fertigstellen
+    case '15':     return 'danger'   // Abbrechen...
+    case '17':     return 'danger'   // Abgebrochen
+        
+    // Unbekannte Status-Codes
     default: return 'secondary'
   }
 }
 
 // Fortschrittsbalken-Farbe basierend auf Download-Status
 const getProgressColor = (status) => {
+  // Debug-Log für den Status
+  console.log(`getProgressColor aufgerufen mit Status: ${status}`)
+  
   switch (status) {
-    case 'completed': return 'success'
-    case 'downloading': return 'info'
-    case 'paused': return 'warning'
-    case 'failed': return 'danger'
-    case 'waiting': return 'secondary'
-    default: return 'info'
+    // Aktive Downloads
+    case '0':      return 'info'     // Suchen/Laden
+    case '0_1':    return 'primary'  // Suchen
+    case '0_2':    return 'info'     // Übertrage
+    case '16':     return 'info'     // Erstelle .data
+    case '12':     return 'info'     // Fertigstellen...
+    
+    // Fertige Downloads
+    case '14':     return 'success'  // Fertig
+    
+    // Pausierte Downloads
+    case '18':     return 'warning'  // Pausiert
+    
+    // Downloads mit Fehlern
+    case '1':      return 'danger'   // Platte voll
+    case '13':     return 'danger'   // Fehler beim Fertigstellen
+    case '15':     return 'danger'   // Abbrechen...
+    case '17':     return 'danger'   // Abgebrochen
+    
+    // Unbekannte Status-Codes
+    default: return 'primary'  // Alle anderen Status
   }
 }
 
 // Status-Text auf Deutsch
 const getStatusText = (status) => {
   switch (status) {
-    case 'completed': return 'Abgeschlossen'
-    case 'downloading': return 'Lädt herunter'
-    case 'paused': return 'Pausiert'
-    case 'failed': return 'Fehlgeschlagen'
-    case 'waiting': return 'Wartend'
-    default: return status
+    // Hauptstatus
+    case '0':      return 'Laden'
+    case '0_1':    return 'Suchen'
+    case '0_2':    return 'Übertrage'
+    case '1':      return 'Platte voll'
+    case '12':     return 'Fertigstellen...'
+    case '13':     return 'Fehler beim Fertigstellen'
+    case '14':     return 'Fertig'
+    case '15':     return 'Abbrechen...'
+    case '16':     return 'Erstelle .data'
+    case '17':     return 'Abgebrochen'
+    case '18':     return 'Pausiert'
+        
+    // Unbekannte Status-Codes
+    default: return `Status: ${status}`
   }
 }
 
@@ -301,14 +636,75 @@ const loadDownloadsFromCore = async () => {
         const downloadIdElements = xmlDoc.querySelectorAll('downloadid')
         console.log('Found downloadid elements:', downloadIdElements.length)
 
+        // Extrahiere download-Elemente (für Status und andere Informationen)
+        const downloadElements = xmlDoc.querySelectorAll('download')
+        console.log('Found download elements:', downloadElements.length)
+        
+        // Debug: Zeige die Attribute der download-Elemente
+        for (let i = 0; i < downloadElements.length; i++) {
+          const download = downloadElements[i]
+          console.log(`Download ${i}: id=${download.getAttribute('id')}, status=${download.getAttribute('status')}, filename=${download.getAttribute('filename')}`)
+        }
+
         // Extrahiere user-Elemente
         const userElements = xmlDoc.querySelectorAll('user')
         console.log('Found user elements:', userElements.length)
 
-        // Verarbeite downloadid-Elemente
+        // Verarbeite download-Elemente direkt
+        downloadElements.forEach(downloadElement => {
+          const downloadId = downloadElement.getAttribute('id')
+          if (!downloadId) return
+          
+          console.log(`Verarbeite Download-Element mit ID ${downloadId}`)
+          
+          // Extrahiere Informationen direkt aus dem download-Element
+          const fileName = downloadElement.getAttribute('filename') || `Download ${downloadId}`
+          const fileSize = parseInt(downloadElement.getAttribute('size') || '0')
+          const downloadStatus = downloadElement.getAttribute('status') || '0'
+          const powerDownload = parseInt(downloadElement.getAttribute('powerdownload') || '0')
+          
+          console.log(`Download ${downloadId}: fileName=${fileName}, status=${downloadStatus}, size=${fileSize}`)
+          
+          // Berechne den Fortschritt basierend auf dem Status
+          let progress = 0;
+          if (downloadStatus === '14') {
+            // Fertige Downloads haben 100% Fortschritt
+            progress = 100;
+          } else {
+            // Berechne den Fortschritt basierend auf den geladenen Bytes
+            const loaded = parseInt(downloadElement.getAttribute('loaded') || '0')
+            if (fileSize > 0) {
+              progress = Math.round((loaded / fileSize) * 100)
+            }
+          }
+          
+          // Füge den Download direkt zur Liste hinzu
+          downloadsList.push({
+            id: downloadId,
+            fileName: fileName,
+            size: formatBytes(fileSize),
+            rawSize: fileSize,
+            progress: progress,
+            status: downloadStatus,
+            speed: downloadStatus === '14' ? '0 KB/s' : '...',
+            eta: downloadStatus === '14' ? '--:--:--' : '...',
+            sources: 1,
+            powerdownload: powerDownload,
+            loaded: parseInt(downloadElement.getAttribute('loaded') || '0'),
+            rawData: { downloadId, downloadElement }
+          })
+        })
+        
+        // Verarbeite auch downloadid-Elemente für Abwärtskompatibilität
         downloadIdElements.forEach(downloadIdElement => {
           const downloadId = downloadIdElement.getAttribute('id')
           if (!downloadId) return
+          
+          // Überspringe Downloads, die bereits durch download-Elemente verarbeitet wurden
+          if (downloadsList.some(d => d.id === downloadId)) {
+            console.log(`Download ${downloadId} wurde bereits durch download-Element verarbeitet, überspringe`)
+            return
+          }
 
           // Sammle alle Benutzer für diesen Download
           const userIds = []
@@ -634,17 +1030,35 @@ const loadDownloadsFromCore = async () => {
 
         // Füge einen Beispiel-Download hinzu, wenn keine Downloads gefunden wurden
         if (process.env.NODE_ENV === 'development') {
+          // Beispiel für einen aktiven Download
           downloadsList.push({
-            id: 'example',
+            id: 'example1',
             fileName: 'Beispiel-Download.mp4',
             size: '1.5 GB',
             rawSize: 1500000000,
             progress: 35,
-            status: 'downloading',
+            status: '0_2', // Lade..
             speed: '1.2 MB/s',
             eta: '00:15:30',
             sources: 3,
+            powerdownload: 2,
             loaded: 525000000,
+            rawData: null
+          })
+          
+          // Beispiel für einen fertigen Download
+          downloadsList.push({
+            id: 'example2',
+            fileName: 'Supernatural.11x14.German.1080p.AC3.DL.HEVC.mkv',
+            size: '950 MB',
+            rawSize: 950397495,
+            progress: 100,
+            status: '14', // Fertig
+            speed: '0 KB/s',
+            eta: '--:--:--',
+            sources: 1,
+            powerdownload: 0,
+            loaded: 950397495,
             rawData: null
           })
         }
@@ -667,10 +1081,11 @@ const loadDownloadsFromCore = async () => {
         size: '1.5 GB',
         rawSize: 1500000000,
         progress: 35,
-        status: 'downloading',
+        status: '0_2',  // Lade..
         speed: '1.2 MB/s',
         eta: '00:15:30',
         sources: 3,
+        powerdownload: 2,
         loaded: 525000000,
         rawData: null
       }]
@@ -680,24 +1095,33 @@ const loadDownloadsFromCore = async () => {
 
 // Hilfsfunktion: Bytes in lesbare Größe umwandeln
 const formatBytes = (bytes, decimals = 2) => {
-  if (bytes === 0) return '0 B'
+  // Sicherstellen, dass bytes eine positive Zahl ist
+  const validBytes = Math.max(0, Number(bytes) || 0)
+
+  if (validBytes === 0) return '0 B'
 
   const k = 1024
   const dm = decimals < 0 ? 0 : decimals
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  const i = Math.min(Math.floor(Math.log(validBytes) / Math.log(k)), sizes.length - 1)
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
+  return parseFloat((validBytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
 // Hilfsfunktion: Sekunden in lesbare Zeit umwandeln
 const formatTime = (seconds) => {
-  if (!seconds || seconds <= 0) return '--:--:--'
+  // Sicherstellen, dass seconds eine positive Zahl ist
+  const validSeconds = Number(seconds) || 0
 
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
+  if (validSeconds <= 0) return '--:--:--'
+
+  // Begrenze die Zeit auf maximal 99:59:59 (359999 Sekunden)
+  const cappedSeconds = Math.min(validSeconds, 359999)
+
+  const hours = Math.floor(cappedSeconds / 3600)
+  const minutes = Math.floor((cappedSeconds % 3600) / 60)
+  const secs = Math.floor(cappedSeconds % 60)
 
   return [
     hours.toString().padStart(2, '0'),
@@ -711,33 +1135,47 @@ const pauseResume = async (download) => {
   try {
     const downloadId = download.id
 
-    if (download.status === 'downloading') {
+    // Status-Codes: 
+    // '0', '0_1', '0_2', '12', '16', 'waiting', 'downloading' = Suchen/Laden/Aktiv
+    // '14', 'completed' = Fertig
+    // '18', 'paused' = Pausiert
+    // '1', '13', '15', '17', 'failed' = Fehler/Abbruch
+
+    if (download.status === '0' || download.status === '0_1' || download.status === '0_2' || 
+        download.status === '12' || download.status === '16' ||
+        download.status === 'waiting' || download.status === 'downloading') {
       // Download pausieren
       console.log(`Pausing download ${downloadId}...`)
-      await coreService.command('function', 'pausedownload', { id: downloadId })
+      await coreService.command('text', 'function/pausedownload', { id: downloadId })
 
       // Status lokal aktualisieren (wird beim nächsten Refresh überschrieben)
-      download.status = 'paused'
+      download.status = '18' // Pausiert
       download.speed = '0 KB/s'
       download.eta = '--:--:--'
 
       console.log(`Download ${downloadId} paused`)
-    } else if (download.status === 'paused' || download.status === 'waiting') {
+    } else if (download.status === '18' || download.status === 'paused') {
       // Download fortsetzen
       console.log(`Resuming download ${downloadId}...`)
-      await coreService.command('function', 'resumedownload', { id: downloadId })
+      await coreService.command('text', 'function/resumedownload', { id: downloadId })
 
       // Status lokal aktualisieren (wird beim nächsten Refresh überschrieben)
-      download.status = 'downloading'
+      download.status = '0_2' // Laden
 
       console.log(`Download ${downloadId} resumed`)
     }
 
-    // Nach kurzer Verzögerung aktualisieren, um den neuen Status zu sehen
-    setTimeout(() => refreshDownloads(), 1000)
+    // Kurze Verzögerung, um dem Core Zeit zu geben, den Status zu aktualisieren
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Aktualisiere die Downloads-Liste
+    await refreshDownloads()
   } catch (err) {
     error.value = `Fehler beim Pausieren/Fortsetzen des Downloads: ${err.message}`
     console.error('Error pausing/resuming download:', err)
+    
+    // Trotz Fehler die Liste aktualisieren, um den aktuellen Status zu sehen
+    setTimeout(() => refreshDownloads(), 1000)
   }
 }
 
@@ -747,8 +1185,16 @@ const cancelDownload = async (download) => {
     const downloadId = download.id
 
     console.log(`Cancelling download ${downloadId}...`)
-    await coreService.command('function', 'canceldownload', { id: downloadId })
-
+    
+    // Verwende 'text' statt 'function' für den Befehl, um Weiterleitungen zu vermeiden
+    await coreService.command('text', 'function/canceldownload', { id: downloadId })
+    
+    // Kurze Verzögerung, um dem Core Zeit zu geben, den Download zu entfernen
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Aktualisiere die Downloads-Liste
+    await refreshDownloads()
+    
     // Lokal aus der Liste entfernen (wird beim nächsten Refresh aktualisiert)
     const index = downloads.value.findIndex(d => d.id === downloadId)
     if (index > -1) {
@@ -759,6 +1205,9 @@ const cancelDownload = async (download) => {
   } catch (err) {
     error.value = `Fehler beim Abbrechen des Downloads: ${err.message}`
     console.error('Error cancelling download:', err)
+    
+    // Trotz Fehler die Liste aktualisieren, um den aktuellen Status zu sehen
+    setTimeout(() => refreshDownloads(), 1000)
   }
 }
 
@@ -777,9 +1226,145 @@ const addDownload = async (url) => {
 
     // Modal schließen
     showAddDownloadModal.value = false
+
+    // Eingabefeld zurücksetzen
+    newDownloadUrl.value = ''
   } catch (err) {
     error.value = `Fehler beim Hinzufügen des Downloads: ${err.message}`
     console.error('Error adding download:', err)
+  }
+}
+
+// Download umbenennen
+const renameDownload = (download) => {
+  try {
+    const newName = prompt('Neuer Dateiname:', download.fileName)
+    if (newName && newName !== download.fileName) {
+      console.log(`Renaming download ${download.id} to ${newName}...`)
+      // Hier würde die API-Anfrage zum Umbenennen erfolgen
+      // Beispiel: await coreService.command('function', 'renamedownload', { id: download.id, name: newName })
+
+      // Für jetzt nur lokale Aktualisierung
+      download.fileName = newName
+    }
+  } catch (err) {
+    error.value = `Fehler beim Umbenennen des Downloads: ${err.message}`
+    console.error('Error renaming download:', err)
+  }
+}
+
+// Download-Informationen anzeigen
+const showDownloadInfo = async (download) => {
+  try {
+    console.log(`Showing info for download ${download.id}...`)
+
+    // Setze den ausgewählten Download
+    selectedDownload.value = download
+
+    // Quellen-Arrays zurücksetzen
+    activeSources.value = []
+    queuedSources.value = []
+    inactiveSources.value = []
+
+    // Wenn rawData vorhanden ist, extrahiere die Quellen
+    if (download.rawData && download.rawData.usersForDownload) {
+      const sources = download.rawData.usersForDownload
+
+      // Sortiere die Quellen nach Status
+      sources.forEach(source => {
+        // Berechne den Fortschritt für jede Quelle
+        let sourceProgress = 0
+        if (source.downloadedBytes && download.rawSize) {
+          sourceProgress = Math.min(Math.round((source.downloadedBytes / download.rawSize) * 100), 100)
+        } else if (source.actualPosition && download.rawSize) {
+          sourceProgress = Math.min(Math.round((source.actualPosition / download.rawSize) * 100), 100)
+        }
+
+        // Füge berechneten Fortschritt hinzu
+        const enhancedSource = {
+          ...source,
+          progress: sourceProgress
+        }
+
+        // Kategorisiere die Quellen basierend auf ihrem Status
+        if (source.status === '7' || source.status === '8' || source.status === '9') {
+          // Aktive Quellen (Übertragung)
+          activeSources.value.push(enhancedSource)
+        } else if (source.status === '15') {
+          // Wartende Quellen (in der Warteschlange)
+          queuedSources.value.push(enhancedSource)
+        } else {
+          // Inaktive Quellen (Rest)
+          inactiveSources.value.push(enhancedSource)
+        }
+      })
+    } else {
+      // Wenn keine echten Daten vorhanden sind, erstelle Beispieldaten für die Vorschau
+      if (process.env.NODE_ENV === 'development') {
+        // Aktive Quellen
+        activeSources.value = [
+          {
+            id: '1',
+            nickname: 'user1',
+            filename: download.fileName,
+            speed: 7800,
+            progress: 2.36,
+            downloadedBytes: 11.66 * 1024 * 1024
+          },
+          {
+            id: '2',
+            nickname: 'user2',
+            filename: download.fileName,
+            speed: 7000,
+            progress: 1.75,
+            downloadedBytes: 14.16 * 1024 * 1024
+          },
+          {
+            id: '3',
+            nickname: 'anyone',
+            filename: download.fileName.replace('.mkv', '.mp4'),
+            speed: 7200,
+            progress: 9.95,
+            downloadedBytes: 4.1 * 1024 * 1024
+          }
+        ]
+
+        // Inaktive Quellen
+        inactiveSources.value = [
+          {
+            id: '4',
+            nickname: '?',
+            filename: '...',
+            speed: 0,
+            progress: 0,
+            downloadedBytes: 0
+          },
+          {
+            id: '5',
+            nickname: '?',
+            filename: '...',
+            speed: 0,
+            progress: 0,
+            downloadedBytes: 0
+          },
+          {
+            id: '6',
+            nickname: 'K:-D',
+            filename: download.fileName.replace('.mkv', '.mp4'),
+            speed: 0,
+            progress: 0,
+            downloadedBytes: 4.1 * 1024 * 1024
+          }
+        ]
+      }
+    }
+
+    // Öffne das Modal
+    showInfoModal.value = true
+
+  } catch (err) {
+    error.value = `Fehler beim Anzeigen der Download-Informationen: ${err.message}`
+    console.error('Error showing download info:', err)
   }
 }
 
@@ -815,17 +1400,27 @@ const initializeData = async () => {
   }
 }
 
+// Intervall-Referenz außerhalb der Hooks definieren
+let updateInterval = null
+
 // Lifecycle hooks
 onMounted(() => {
   console.log('Downloads view mounted')
   initializeData()
 
   // Auto-Update starten (alle 10 Sekunden)
-  const interval = setInterval(refreshDownloads, 1000)
+  updateInterval = setInterval(refreshDownloads, 10000)
+})
 
-  // Cleanup beim Unmount
-  onUnmounted(() => {
-    clearInterval(interval)
-  })
+
+
+
+
+// Cleanup beim Unmount
+onUnmounted(() => {
+  if (updateInterval) {
+    clearInterval(updateInterval)
+    updateInterval = null
+  }
 })
 </script>

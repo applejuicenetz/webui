@@ -18,12 +18,15 @@ import {
   cilReload,
   cilWifiSignal4,
   cilWifiSignalOff,
-  cilBank
+  cilBank,
+  cibLinux
 } from '@coreui/icons'
 import { useRouter } from 'vue-router'
 import { useCoreStore } from '../stores/core.js'
 import { useAuthStore } from '../stores/auth.js'
 import DebugPanel from '../components/DebugPanel.vue'
+import VersionChecker from '../components/VersionChecker.vue'
+import UpdateModal from '../components/UpdateModal.vue'
 
 const router = useRouter()
 const coreStore = useCoreStore()
@@ -33,6 +36,12 @@ const authStore = useAuthStore()
 const lastUpdateTime = ref(new Date())
 const error = ref(null)
 const showDebug = ref(false)
+
+// Versionscheck und Update-Modal
+const currentAppVersion = ref(import.meta.env.VITE_APP_VERSION || 'Unbekannt')
+const latestGitHubVersion = ref(null)
+const updateAvailable = ref(false)
+const showUpdateModal = ref(false)
 
 // Testwerte für Downloads und Uploads
 const downloadStats = reactive({
@@ -126,16 +135,108 @@ const initializeData = async () => {
 onMounted(() => {
   console.log('Dashboard mounted')
   initializeData()
+  
+  // Überprüfe auf Updates
+  checkForUpdates()
 })
 
 onUnmounted(() => {
   // Stop auto-update when component is unmounted
   coreStore.stopAutoUpdate()
 })
+// Funktion zum Abrufen der neuesten Version von GitHub
+async function getLatestGitHubVersion() {
+  try {
+    const response = await fetch('https://api.github.com/repos/applejuicenetz/webui/releases/latest');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.tag_name; // Die Tag-Bezeichnung enthält die Versionsnummer
+  } catch (error) {
+    console.error('Fehler beim Abrufen der GitHub-Version:', error);
+    return null;
+  }
+}
+
+// Funktion zum Vergleichen von Versionsnummern (semantisch)
+function compareVersions(v1, v2) {
+  // Entferne optionales 'v' Präfix
+  const cleanV1 = v1.startsWith('v') ? v1.substring(1) : v1;
+  const cleanV2 = v2.startsWith('v') ? v2.substring(1) : v2;
+
+  const parts1 = cleanV1.split('.').map(Number);
+  const parts2 = cleanV2.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+
+    if (p1 > p2) return 1; // v1 ist neuer
+    if (p1 < p2) return -1; // v2 ist neuer
+  }
+  return 0; // Versionen sind gleich
+}
+
+// Funktion zum Überprüfen, ob ein Update-Modal angezeigt werden soll
+function checkShowUpdateModal() {
+  // Prüfen, ob das Modal bereits für diese Version geschlossen wurde
+  const modalDismissed = localStorage.getItem('updateModalDismissed') === 'true';
+  const dismissedVersion = localStorage.getItem('updateModalDismissedVersion');
+  
+  // Wenn das Modal noch nicht geschlossen wurde oder eine neuere Version verfügbar ist
+  if (updateAvailable.value && (!modalDismissed || dismissedVersion !== latestGitHubVersion.value)) {
+    // Zeige das Modal nach einer kurzen Verzögerung an
+    setTimeout(() => {
+      showUpdateModal.value = true;
+    }, 1000);
+  }
+}
+
+// Funktion zum Schließen des Update-Modals
+function closeUpdateModal() {
+  showUpdateModal.value = false;
+}
+
+// Funktion zum Überprüfen auf Updates
+async function checkForUpdates() {
+  try {
+    const latestVersion = await getLatestGitHubVersion();
+    if (latestVersion) {
+      latestGitHubVersion.value = latestVersion;
+      
+      // Vergleiche Versionen
+      if (compareVersions(latestVersion, currentAppVersion.value) > 0) {
+        updateAvailable.value = true;
+        console.log(`[DASHBOARD] Update verfügbar: ${currentAppVersion.value} -> ${latestVersion}`);
+        
+        // Prüfe, ob das Update-Modal angezeigt werden soll
+        checkShowUpdateModal();
+      } else {
+        updateAvailable.value = false;
+        console.log('[DASHBOARD] App ist auf dem neuesten Stand');
+      }
+    }
+  } catch (err) {
+    console.error('[DASHBOARD] Fehler beim Prüfen auf Updates:', err);
+  }
+}
+
 </script>
 
 <template>
   <div class="dashboard-container">
+    <!-- Version Checker Banner -->
+    <VersionChecker :showDetails="false" />
+    
+    <!-- Update Modal -->
+    <UpdateModal 
+      :visible="showUpdateModal" 
+      :currentAppVersion="currentAppVersion"
+      :latestGitHubVersion="latestGitHubVersion"
+      @close="closeUpdateModal"
+    />
+    
     <CRow>
       <!-- Linke Spalte -->
       <CCol xs="12" sm="12" md="6" lg="6">
@@ -325,7 +426,7 @@ onUnmounted(() => {
                 <div class="border-start border-start-4 border-start-info px-3 mb-3">
                   <div class="small text-body-secondary text-truncate">Betriebssystem</div>
                   <div class="fs-5 fw-semibold">
-                    <CIcon :icon="coreData.coreInfo.os.toLowerCase().includes('linux') ? cilGlobeAlt : cilGlobeAlt" class="me-1" />
+                    <CIcon :icon="coreData.coreInfo.os.toLowerCase().includes('linux') ? cibLinux : cilGlobeAlt" class="me-1" />
                     {{ coreData.coreInfo.os }}
                   </div>
                 </div>

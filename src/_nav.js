@@ -4,10 +4,6 @@ export default [
     name: 'Dashboard',
     to: '/app/dashboard',
     icon: 'cil-speedometer',
-    badge: {
-      color: 'primary',
-      text: 'NEW',
-    },
   },
   {
     component: 'CNavTitle',

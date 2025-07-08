@@ -1,239 +1,104 @@
+// VersionChecker.vue
 <template>
-  <div class="uploads-page">
-    <CContainer fluid>
-      <CRow>
-        <CCol>
-          <CCard>
-            <CCardHeader>
-              <h4 class="mb-0">
-                <CIcon icon="cil-cloud-upload" class="me-2" />
-                Uploads
-              </h4>
-            </CCardHeader>
-            <CCardBody>
-              <CRow class="mb-4">
-                <CCol>
-                  <CCard color="light">
-                    <CCardBody class="text-center py-5">
-                      <CIcon icon="cil-cloud-upload" size="xl" class="text-primary mb-3" />
-                      <h5>Drop files here to upload</h5>
-                      <p class="text-muted">or</p>
-                      <CButton color="primary" @click="selectFiles">
-                        Select Files
-                      </CButton>
-                      <input 
-                        ref="fileInput" 
-                        type="file" 
-                        multiple 
-                        style="display: none" 
-                        @change="handleFileSelect"
-                      />
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-              </CRow>
+  <div class="version-checker-container">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Versionsprüfung</h2>
 
-              <CRow v-if="uploads.length > 0">
-                <CCol>
-                  <h5 class="mb-3">Upload Queue</h5>
-                  <CTable striped hover responsive>
-                    <CTableHead>
-                      <CTableRow>
-                        <CTableHeaderCell>File Name</CTableHeaderCell>
-                        <CTableHeaderCell>Size</CTableHeaderCell>
-                        <CTableHeaderCell>Progress</CTableHeaderCell>
-                        <CTableHeaderCell>Status</CTableHeaderCell>
-                        <CTableHeaderCell>Actions</CTableHeaderCell>
-                      </CTableRow>
-                    </CTableHead>
-                    <CTableBody>
-                      <CTableRow v-for="upload in uploads" :key="upload.id">
-                        <CTableDataCell>{{ upload.fileName }}</CTableDataCell>
-                        <CTableDataCell>{{ formatFileSize(upload.size) }}</CTableDataCell>
-                        <CTableDataCell>
-                          <CProgress :value="upload.progress" />
-                          <small class="text-muted">{{ upload.progress }}%</small>
-                        </CTableDataCell>
-                        <CTableDataCell>
-                          <CBadge :color="getStatusColor(upload.status)">
-                            {{ upload.status }}
-                          </CBadge>
-                        </CTableDataCell>
-                        <CTableDataCell>
-                          <CButton 
-                            size="sm" 
-                            color="primary" 
-                            variant="ghost"
-                            @click="pauseResume(upload)"
-                            v-if="upload.status === 'uploading' || upload.status === 'paused'"
-                          >
-                            <CIcon :icon="upload.status === 'uploading' ? 'cil-media-pause' : 'cil-media-play'" />
-                          </CButton>
-                          <CButton 
-                            size="sm" 
-                            color="danger" 
-                            variant="ghost"
-                            @click="cancelUpload(upload)"
-                            v-if="upload.status !== 'completed'"
-                          >
-                            <CIcon icon="cil-x" />
-                          </CButton>
-                          <CButton 
-                            size="sm" 
-                            color="success" 
-                            variant="ghost"
-                            @click="retryUpload(upload)"
-                            v-if="upload.status === 'failed'"
-                          >
-                            <CIcon icon="cil-reload" />
-                          </CButton>
-                        </CTableDataCell>
-                      </CTableRow>
-                    </CTableBody>
-                  </CTable>
-                </CCol>
-              </CRow>
+    <div v-if="loading" class="text-blue-600 text-lg">Lade neueste Version von GitHub...</div>
+    <div v-else-if="error" class="error-message">
+      <strong class="font-bold">Fehler:</strong> {{ error }}
+    </div>
+    <div v-else>
+      <p class="text-gray-700 text-lg mb-2">
+        <span class="font-semibold">Aktuelle App-Version:</span> {{ currentAppVersion }}
+      </p>
+      <p class="text-gray-700 text-lg mb-4">
+        <span class="font-semibold">Neueste GitHub-Version:</span> {{ latestGitHubVersion }}
+      </p>
 
-              <CRow class="mt-4" v-if="uploads.length > 0">
-                <CCol>
-                  <CCard>
-                    <CCardBody>
-                      <h6>Upload Statistics</h6>
-                      <CRow>
-                        <CCol :sm="3">
-                          <strong>Total Files:</strong> {{ uploads.length }}
-                        </CCol>
-                        <CCol :sm="3">
-                          <strong>Completed:</strong> {{ completedUploads }}
-                        </CCol>
-                        <CCol :sm="3">
-                          <strong>Uploading:</strong> {{ activeUploads }}
-                        </CCol>
-                        <CCol :sm="3">
-                          <strong>Failed:</strong> {{ failedUploads }}
-                        </CCol>
-                      </CRow>
-                    </CCardBody>
-                  </CCard>
-                </CCol>
-              </CRow>
-            </CCardBody>
-          </CCard>
-        </CCol>
-      </CRow>
-    </CContainer>
+      <div v-if="updateAvailable" class="update-available-message">
+        <strong class="font-bold">Update verfügbar!</strong> Eine neuere Version ({{ latestGitHubVersion }}) ist verfügbar.
+      </div>
+      <div v-else class="up-to-date-message">
+        <strong class="font-bold">Aktuell!</strong> Ihre Anwendung ist auf dem neuesten Stand.
+      </div>
+
+      <p class="text-sm text-gray-500 mt-6">
+        Hinweis: Die "Aktuelle App-Version" wird aus der `package.json` während des Build-Prozesses injiziert.
+      </p>
+    </div>
   </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, onMounted } from 'vue';
 
-export default {
-  name: 'Uploads',
-  setup() {
-    const fileInput = ref(null)
-    const uploads = ref([])
+// Aktuelle App-Version aus der Umgebungsvariable (injiziert von Vite/Webpack)
+// Wichtig: 'import.meta.env.VITE_APP_VERSION' für Vite
+// 'process.env.VUE_APP_VERSION' für Vue CLI/Webpack
+const currentAppVersion = ref(import.meta.env.VITE_APP_VERSION || 'Unbekannt');
 
-    const completedUploads = computed(() => 
-      uploads.value.filter(u => u.status === 'completed').length
-    )
-    
-    const activeUploads = computed(() => 
-      uploads.value.filter(u => u.status === 'uploading').length
-    )
-    
-    const failedUploads = computed(() => 
-      uploads.value.filter(u => u.status === 'failed').length
-    )
+const latestGitHubVersion = ref(null);
+const loading = ref(true);
+const error = ref(null);
+const updateAvailable = ref(false);
 
-    const selectFiles = () => {
-      fileInput.value.click()
+// Funktion zum Abrufen der neuesten Version von GitHub
+const fetchLatestVersion = async () => {
+  try {
+    const response = await fetch('https://api.github.com/repos/applejuicenetz/webui/releases/latest');
+
+    if (!response.ok) {
+      throw new Error(`HTTP-Fehler! Status: ${response.status}`);
     }
 
-    const handleFileSelect = (event) => {
-      const files = Array.from(event.target.files)
-      files.forEach(file => {
-        const upload = {
-          id: Date.now() + Math.random(),
-          fileName: file.name,
-          size: file.size,
-          progress: 0,
-          status: 'queued',
-          file: file
-        }
-        uploads.value.push(upload)
-        startUpload(upload)
-      })
-    }
-
-    const startUpload = (upload) => {
-      upload.status = 'uploading'
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        upload.progress += Math.random() * 10
-        if (upload.progress >= 100) {
-          upload.progress = 100
-          upload.status = 'completed'
-          clearInterval(interval)
-        }
-      }, 500)
-    }
-
-    const formatFileSize = (bytes) => {
-      if (bytes === 0) return '0 Bytes'
-      const k = 1024
-      const sizes = ['Bytes', 'KB', 'MB', 'GB']
-      const i = Math.floor(Math.log(bytes) / Math.log(k))
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-    }
-
-    const getStatusColor = (status) => {
-      switch (status) {
-        case 'completed': return 'success'
-        case 'uploading': return 'primary'
-        case 'paused': return 'warning'
-        case 'failed': return 'danger'
-        case 'queued': return 'secondary'
-        default: return 'secondary'
-      }
-    }
-
-    const pauseResume = (upload) => {
-      if (upload.status === 'uploading') {
-        upload.status = 'paused'
-      } else if (upload.status === 'paused') {
-        upload.status = 'uploading'
-        startUpload(upload)
-      }
-    }
-
-    const cancelUpload = (upload) => {
-      const index = uploads.value.findIndex(u => u.id === upload.id)
-      if (index > -1) {
-        uploads.value.splice(index, 1)
-      }
-    }
-
-    const retryUpload = (upload) => {
-      upload.progress = 0
-      upload.status = 'uploading'
-      startUpload(upload)
-    }
-
-    return {
-      fileInput,
-      uploads,
-      completedUploads,
-      activeUploads,
-      failedUploads,
-      selectFiles,
-      handleFileSelect,
-      formatFileSize,
-      getStatusColor,
-      pauseResume,
-      cancelUpload,
-      retryUpload
-    }
+    const data = await response.json();
+    return data.tag_name; // Die Tag-Bezeichnung enthält die Versionsnummer
+  } catch (err) {
+    console.error('Fehler beim Abrufen der GitHub-Version:', err);
+    throw err;
   }
-}
+};
+
+// Funktion zum Vergleichen von Versionsnummern (semantisch)
+const compareVersions = (v1, v2) => {
+  // Entferne optionales 'v' Präfix
+  const cleanV1 = v1.startsWith('v') ? v1.substring(1) : v1;
+  const cleanV2 = v2.startsWith('v') ? v2.substring(1) : v2;
+
+  const parts1 = cleanV1.split('.').map(Number);
+  const parts2 = cleanV2.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+    const p1 = parts1[i] || 0;
+    const p2 = parts2[i] || 0;
+
+    if (p1 > p2) return 1; // v1 ist neuer
+    if (p1 < p2) return -1; // v2 ist neuer
+  }
+  return 0; // Versionen sind gleich
+};
+
+// Hauptfunktion, die den Versionscheck durchführt
+const performVersionCheck = async () => {
+  try {
+    loading.value = true;
+    const latestVersion = await fetchLatestVersion();
+    latestGitHubVersion.value = latestVersion;
+
+    if (compareVersions(latestVersion, currentAppVersion.value) > 0) {
+      updateAvailable.value = true;
+    } else {
+      updateAvailable.value = false;
+    }
+  } catch (err) {
+    error.value = `Konnte die neueste GitHub-Version nicht abrufen: ${err.message}`;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// mounted Hook in Composition API
+onMounted(() => {
+  performVersionCheck();
+});
 </script>

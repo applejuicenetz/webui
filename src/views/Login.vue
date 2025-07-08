@@ -135,12 +135,22 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { hashPassword } from '@/utils/crypto'
 import { config } from '@/utils/config'
+import UpdateModal from '@/components/UpdateModal.vue'
 
 export default {
   name: 'Login',
+  components: {
+    UpdateModal
+  },
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
+    
+    // Versionscheck-Variablen
+    const currentAppVersion = ref(import.meta.env.VITE_APP_VERSION || 'Unbekannt')
+    const latestGitHubVersion = ref(null)
+    const updateAvailable = ref(false)
+    const showUpdateModal = ref(false)
     
     const loginData = ref({
       coreUrl: config.core.host,
@@ -153,6 +163,78 @@ export default {
       if (!loginData.value.coreUrl || !loginData.value.port) return ''
       return `http://${loginData.value.coreUrl}:${loginData.value.port}/settings.xml?password=[MD5-Hash]`
     })
+
+    // Funktion zum Abrufen der neuesten Version von GitHub
+    const getLatestGitHubVersion = async () => {
+      try {
+        const response = await fetch('https://api.github.com/repos/applejuicenetz/webui/releases/latest');
+        if (!response.ok) {
+          throw new Error(`HTTP-Fehler! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.tag_name; // Die Tag-Bezeichnung enthält die Versionsnummer
+      } catch (error) {
+        console.error('Fehler beim Abrufen der GitHub-Version:', error);
+        return null;
+      }
+    };
+
+    // Funktion zum Vergleichen von Versionsnummern (semantisch)
+    const compareVersions = (v1, v2) => {
+      // Entferne optionales 'v' Präfix
+      const cleanV1 = v1.startsWith('v') ? v1.substring(1) : v1;
+      const cleanV2 = v2.startsWith('v') ? v2.substring(1) : v2;
+
+      const parts1 = cleanV1.split('.').map(Number);
+      const parts2 = cleanV2.split('.').map(Number);
+
+      for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+        const p1 = parts1[i] || 0;
+        const p2 = parts2[i] || 0;
+
+        if (p1 > p2) return 1; // v1 ist neuer
+        if (p1 < p2) return -1; // v2 ist neuer
+      }
+      return 0; // Versionen sind gleich
+    };
+
+    // Funktion zum Überprüfen auf Updates
+    const checkForUpdates = async () => {
+      try {
+        const latestVersion = await getLatestGitHubVersion();
+        if (latestVersion) {
+          latestGitHubVersion.value = latestVersion;
+          
+          // Vergleiche Versionen
+          if (compareVersions(latestVersion, currentAppVersion.value) > 0) {
+            updateAvailable.value = true;
+            console.log(`[LOGIN] Update verfügbar: ${currentAppVersion.value} -> ${latestVersion}`);
+            
+            // Prüfen, ob das Modal bereits für diese Version geschlossen wurde
+            const modalDismissed = localStorage.getItem('updateModalDismissed') === 'true';
+            const dismissedVersion = localStorage.getItem('updateModalDismissedVersion');
+            
+            // Wenn das Modal noch nicht geschlossen wurde oder eine neuere Version verfügbar ist
+            if (!modalDismissed || dismissedVersion !== latestVersion) {
+              // Zeige das Modal nach einer kurzen Verzögerung an
+              setTimeout(() => {
+                showUpdateModal.value = true;
+              }, 1000);
+            }
+          } else {
+            updateAvailable.value = false;
+            console.log('[LOGIN] App ist auf dem neuesten Stand');
+          }
+        }
+      } catch (err) {
+        console.error('[LOGIN] Fehler beim Prüfen auf Updates:', err);
+      }
+    };
+
+    // Funktion zum Schließen des Update-Modals
+    const closeUpdateModal = () => {
+      showUpdateModal.value = false;
+    };
 
     const handleLogin = async () => {
       try {
@@ -171,6 +253,10 @@ export default {
         if (success) {
           // Erfolgreiche Anmeldung - zum Dashboard weiterleiten
           console.log('Login erfolgreich!')
+          
+          // Überprüfe auf Updates nach erfolgreichem Login
+          await checkForUpdates();
+          
           router.push('/app/dashboard')
         }
       } catch (error) {
@@ -195,7 +281,13 @@ export default {
       authStore,
       testUrl,
       handleLogin,
-      config
+      config,
+      // Versionscheck
+      currentAppVersion,
+      latestGitHubVersion,
+      updateAvailable,
+      showUpdateModal,
+      closeUpdateModal
     }
   }
 }
