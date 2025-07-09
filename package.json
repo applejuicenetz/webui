@@ -4,25 +4,18 @@
   "description": "The new modern WebUI für P2P AppleJuice Core",
   "repository": {
     "type": "git",
-    "url": "git@github.com:coreui/coreui-free-vue-admin-template.git"
+    "url": "git@github.com:applejuicenetz/webui.git"
   },
   "license": "MIT",
-  "author": "The CoreUI Team (https://github.com/orgs/coreui/people)",
+  "author": "appleJuice Community",
   "scripts": {
-    "dev": "vite --force",
-    "dev:docker": "vite --host 0.0.0.0 --port 5173 --force",
     "build": "vite build",
     "lint": "eslint",
     "preview": "vite preview",
     "serve": "node server.js",
     "start": "NODE_ENV=production node server.js",
-    "proxy": "node simple-proxy-cjs.js",
     "start:all": "npm run start",
-    "start:dev": "npm run start",
-    "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
-    "docker:dev:down": "docker-compose -f docker-compose.dev.yml down",
-    "docker:prod": "docker-compose up --build",
-    "docker:prod:down": "docker-compose down"
+
   },
   "dependencies": {
     "@coreui/chartjs": "^4.1.0",
