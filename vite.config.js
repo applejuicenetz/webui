@@ -30,8 +30,6 @@ export default defineConfig(({ mode }) => {
     watch: {
       usePolling: true // Wichtig für Docker: File watching
     },
-    // Proxy deaktiviert - verwende separaten Proxy-Server auf Port 3001
-    // proxy: {}
   },
   preview: {
     host: '0.0.0.0',
