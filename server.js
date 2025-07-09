@@ -335,6 +335,71 @@ app.get('/status', (req, res) => {
   });
 });
 
+// Update Endpoint
+app.post('/update', (req, res) => {
+  console.log('[UPDATE] Update request received');
+
+  // Prüfen, ob automatische Updates deaktiviert sind
+  if (process.env.DISABLE_AUTO_UPDATE === 'true') {
+    console.log('[UPDATE] Automatic updates are disabled by environment variable');
+    return res.status(403).json({
+      error: 'Updates disabled',
+      message: 'Automatische Updates sind durch Systemeinstellungen deaktiviert'
+    });
+  }
+
+  const { exec } = require('child_process');
+  const updateScript = path.join(__dirname, 'scripts', 'update.sh');
+
+  // Prüfen, ob das Update-Skript existiert
+  if (!require('fs').existsSync(updateScript)) {
+    console.error('[UPDATE] Update script not found at:', updateScript);
+    return res.status(404).json({
+      error: 'Update script not found',
+      message: 'Das Update-Skript wurde nicht gefunden'
+    });
+  }
+
+  console.log('[UPDATE] Executing update script:', updateScript);
+
+  try {
+    // Update-Skript ausführen
+    exec(`bash ${updateScript}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error('[UPDATE] Error executing update script:', error);
+        return res.status(500).json({
+          error: 'Update failed',
+          message: 'Update konnte nicht durchgeführt werden',
+          details: error.message,
+          stderr: stderr
+        });
+      }
+
+      console.log('[UPDATE] Update script output:', stdout);
+
+      // Erfolgreiche Antwort senden
+      res.json({
+        message: 'Update initiated',
+        status: 'success',
+        details: 'Der Server wird in Kürze neu gestartet'
+      });
+
+      // Server nach kurzer Verzögerung neu starten
+      setTimeout(() => {
+        console.log('[UPDATE] Restarting server...');
+        process.exit(0); // Der Server wird durch den Container-Restart neu gestartet
+      }, 3000);
+    });
+  } catch (err) {
+    console.error('[UPDATE] Exception during update process:', err);
+    res.status(500).json({
+      error: 'Update exception',
+      message: 'Fehler beim Starten des Update-Prozesses',
+      details: err.message
+    });
+  }
+});
+
 // Server starten
 app.listen(PORT, () => {
   console.log(`[OK] Server läuft auf http://localhost:${PORT}`);

@@ -8,7 +8,12 @@ services:
       - "5173:5173"  # Vite Development Server
     environment:
       - NODE_ENV=production
-      - VITE_AJ_CORE_HOST=192.168.178.222
-      - VITE_AJ_CORE_PORT=9854
+    #  - VITE_AJ_CORE_HOST=localhost
+    #  - VITE_AJ_CORE_PORT=9851
       - PORT=3000
+      - DISABLE_AUTO_UPDATE=false # Auf 'true' setzen, um automatische Updates zu deaktivieren
     restart: unless-stopped
+    command:
+      - npm
+      - run
+      - start

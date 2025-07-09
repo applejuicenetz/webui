@@ -31,7 +31,17 @@ RUN npm install --only=production
 # Built app und server kopieren
 COPY --from=build /app/dist ./dist
 COPY server.js ./
+COPY scripts ./scripts/
 
+<<<<<<< Updated upstream
+=======
+# Stellen Sie sicher, dass das Update-Skript ausführbar ist
+RUN chmod +x ./scripts/update.sh
+
+# Umgebungsvariablen
+ENV DISABLE_AUTO_UPDATE=false
+
+>>>>>>> Stashed changes
 # Ports expose
 EXPOSE 3000
 
