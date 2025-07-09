@@ -8,10 +8,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Default AppleJuice Core settings
-let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.178.222';
-let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9854';
+let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.1.1';
+let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9851';
 
-console.log(`[START] Starting AppleJuice Nexus Server on port ${PORT}`);
+console.log(`[START] Starting appleJuice WebUi Server on port ${PORT}`);
 console.log(`[PROXY] Proxying API requests to: http://${CORE_HOST}:${CORE_PORT}`);
 
 // Middleware für JSON parsing
