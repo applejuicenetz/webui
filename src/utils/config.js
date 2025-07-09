@@ -25,9 +25,9 @@ export const config = {
 
   // Anwendungseinstellungen
   app: {
-    name: 'AppleJuice neXus',
-    version: '1.0.0',
-    storageKey: 'aj-nexus-auth'
+    name: 'appleJuice WebUi',
+    version: '0.2.3',
+    storageKey: 'aj-webui-auth'
   }
 }
 
