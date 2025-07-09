@@ -43,14 +43,14 @@ export const useAuthStore = defineStore('auth', () => {
       // Passwort hashen bevor es verwendet wird
       const hashedPassword = ensureHashedPassword(pass)
 
-      // Verbindung über separaten Proxy-Server (Port 3001)
+      // Verbindung über separaten Proxy-Server
       const proxyHost = window.location.hostname || 'localhost'
-      const proxyPort = '3001'
-      const fullUrl = `http://${proxyHost}:${proxyPort}/api/settings.xml?password=${hashedPassword}`
+      const proxyPort = window.location.port || '3000'
+      const fullUrl = `http://${proxyHost}:${proxyPort}/api/xml/settings.xml?password=${hashedPassword}`
       console.log('[HOST] Browser-Host:', window.location.hostname)
       console.log('[PORT] Browser-Port:', window.location.port)
       console.log('[PROXY] Verbindung über Proxy zu:', fullUrl.replace(/password=[^&]*/, 'password=****'))
-      console.log('[TARGET] Proxy leitet weiter an:', `http://${url}:${portNum}/xml/settings.xml?password=${hashedPassword}`)
+      console.log('[TARGET] Proxy leitet weiter an:', `http://${url}:${portNum}/xml/settings.xml?password=****`)
 
       // Prepare headers
       const headers = {
@@ -62,7 +62,7 @@ export const useAuthStore = defineStore('auth', () => {
       const response = await fetch(fullUrl, {
         method: 'GET',
         headers,
-        mode: 'no-cors',  // CORS mit korrekten Headers
+        mode: 'cors',  // CORS mit korrekten Headers
         // Timeout aus Konfiguration
         signal: AbortSignal.timeout(config.core.timeout)
       })
@@ -72,28 +72,22 @@ export const useAuthStore = defineStore('auth', () => {
       console.log('[RESPONSE] Response ok:', response.ok)
 
       // [OK] **ERFOLGREICHE ANTWORT = LOGIN**
-      if (response.type === 'opaque' || response.type === 'basic') {
+      if (response.ok) {
         console.log(`[OK] ${response.type} Response - Login erfolgreich!`)
 
-        // Bei erfolgreicher Response prüfen wir auch den Status
-        if (response.type === 'basic' && response.status >= 400) {
-          throw new Error(`HTTP Error ${response.status}: ${response.statusText}`)
-        }
+        // Bei erfolgreicher Response können wir den Content lesen
+        try {
+          const responseText = await response.text()
+          console.log('[INFO] Response preview:', responseText.substring(0, 100) + '...')
 
-        // Bei no-cors (opaque) können wir die Response nicht lesen, aber das ist OK
-        // Bei basic können wir mehr Informationen auswerten
-        if (response.type === 'opaque') {
-          console.log('[INFO] Response text nicht lesbar wegen no-cors mode (das ist OK)')
-        } else {
-          console.log('[INFO] Response verfügbar, Status:', response.status)
-
-          // Bei basic responses können wir den Content lesen
-          try {
-            const responseText = await response.text()
-            console.log('[INFO] Response preview:', responseText.substring(0, 100) + '...')
-          } catch (e) {
-            console.log('[INFO] Response nicht lesbar:', e.message)
+          // Prüfen ob es sich um gültige XML-Daten handelt
+          if (responseText.includes('<?xml') || responseText.includes('<settings')) {
+            console.log('[INFO] Gültige XML-Antwort erhalten')
+          } else {
+            console.log('[INFO] Unexpected response format')
           }
+        } catch (e) {
+          console.log('[INFO] Response nicht lesbar:', e.message)
         }
 
         // **SESSION-DATEN SPEICHERN**
@@ -112,10 +106,10 @@ export const useAuthStore = defineStore('auth', () => {
         console.log('   - Authentifiziert:', true)
 
         return true
+      } else {
+        // Bei HTTP-Fehlercode
+        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`)
       }
-
-      // Bei anderen Response-Typen Fehler werfen
-      throw new Error(`Unexpected response type: ${response.type}`)
 
     } catch (error) {
       console.error('Verbindungsfehler:', error)

@@ -23,7 +23,7 @@ function createDynamicProxy() {
     target: `http://${CORE_HOST}:${CORE_PORT}`,
     changeOrigin: true,
     pathRewrite: {
-      '^/api': '', // /api/settings.xml wird zu /settings.xml
+      '^/api': '', // /api/xml/settings.xml wird zu /xml/settings.xml
     },
     onProxyReq: (proxyReq, req, res) => {
       console.log(`[PROXY] ${req.method} ${req.url} -> http://${CORE_HOST}:${CORE_PORT}${req.url.replace('/api', '')}`);

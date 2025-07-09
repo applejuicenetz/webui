@@ -9,7 +9,7 @@
                 <CForm @submit.prevent="handleLogin">
                   <h1>appleJuice Login</h1>
                   <p class="text-body-secondary">Verbinden Sie sich mit Ihrem appleJuice Core</p>
-                  
+
                   <!-- Fehlermeldung -->
                   <CAlert
                     v-if="authStore.connectionError"
@@ -69,12 +69,12 @@
                   <!-- Login Button -->
                   <CRow>
                     <CCol :xs="6">
-                      <CButton 
-                        color="primary" 
-                        class="px-4" 
+                      <CButton
+                        color="primary"
+                        class="px-4"
                         type="submit"
                         :disabled="authStore.isLoading"
-                      > 
+                      >
                         <CSpinner
                           v-if="authStore.isLoading"
                           size="sm"
@@ -83,9 +83,9 @@
                         {{ authStore.isLoading ? 'Verbinde...' : 'Verbinden' }}
                       </CButton>
                     </CCol>
-                    
+
                   </CRow>
-                  
+
                 </CForm>
               </CCardBody>
             </CCard>
@@ -94,12 +94,12 @@
                 <div>
                   <h2>appleJuice WebUi</h2>
                   <p class="mb-4">
-                    Die moderne WebUI für Ihren appleJuice Core. 
-                    Verwalten Sie Downloads, Uploads und Shares 
+                    Die moderne WebUI für Ihren appleJuice Core.
+                    Verwalten Sie Downloads, Uploads und Shares
                     bequem über Ihren Browser.
                   </p>
                   <div class="d-flex flex-column gap-2">
-                    
+
                   </div>
                 </div>
               </CCardBody>
@@ -127,13 +127,13 @@ export default {
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
-    
+
     // Versionscheck-Variablen
     const currentAppVersion = ref(import.meta.env.VITE_APP_VERSION || 'Unbekannt')
     const latestGitHubVersion = ref(null)
     const updateAvailable = ref(false)
     const showUpdateModal = ref(false)
-    
+
     const loginData = ref({
       coreUrl: config.core.host,
       port: config.core.port,
@@ -186,16 +186,16 @@ export default {
         const latestVersion = await getLatestGitHubVersion();
         if (latestVersion) {
           latestGitHubVersion.value = latestVersion;
-          
+
           // Vergleiche Versionen
           if (compareVersions(latestVersion, currentAppVersion.value) > 0) {
             updateAvailable.value = true;
             console.log(`[LOGIN] Update verfügbar: ${currentAppVersion.value} -> ${latestVersion}`);
-            
+
             // Prüfen, ob das Modal bereits für diese Version geschlossen wurde
             const modalDismissed = localStorage.getItem('updateModalDismissed') === 'true';
             const dismissedVersion = localStorage.getItem('updateModalDismissedVersion');
-            
+
             // Wenn das Modal noch nicht geschlossen wurde oder eine neuere Version verfügbar ist
             if (!modalDismissed || dismissedVersion !== latestVersion) {
               // Zeige das Modal nach einer kurzen Verzögerung an
@@ -223,9 +223,9 @@ export default {
         console.log('Login-Versuch mit MD5-Hash:', {
           coreUrl: loginData.value.coreUrl.trim(),
           port: loginData.value.port.trim(),
-          passwordHash: hashPassword(loginData.value.password)
+          passwordHash: '****'
         })
-        
+
         const success = await authStore.login({
           coreUrl: loginData.value.coreUrl.trim(),
           port: loginData.value.port.trim(),
@@ -235,10 +235,10 @@ export default {
         if (success) {
           // Erfolgreiche Anmeldung - zum Dashboard weiterleiten
           console.log('Login erfolgreich!')
-          
+
           // Überprüfe auf Updates nach erfolgreichem Login
           await checkForUpdates();
-          
+
           router.push('/app/dashboard')
         }
       } catch (error) {
