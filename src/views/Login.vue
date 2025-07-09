@@ -7,8 +7,8 @@
             <CCard class="p-4">
               <CCardBody>
                 <CForm @submit.prevent="handleLogin">
-                  <h1>AppleJuice Login</h1>
-                  <p class="text-body-secondary">Verbinden Sie sich mit Ihrem AppleJuice Core</p>
+                  <h1>appleJuice Login</h1>
+                  <p class="text-body-secondary">Verbinden Sie sich mit Ihrem appleJuice Core</p>
                   
                   <!-- Fehlermeldung -->
                   <CAlert
@@ -85,34 +85,16 @@
                     </CCol>
                     
                   </CRow>
-
-                  <!-- Test URL Anzeige -->
-                  <CRow v-if="testUrl" class="mt-3">
-                    <CCol :xs="12">
-                      <small class="text-muted">
-                        <strong>Test-URL:</strong> {{ testUrl }}
-                      </small>
-                    </CCol>
-                  </CRow>
-
-                  <!-- Umgebungsvariablen Hinweis -->
-                  <CRow class="mt-2">
-                    <CCol :xs="12">
-                      <small class="text-muted">
-                        <CIcon icon="cil-info" class="me-1" />
-                        Standardwerte aus .env: {{ config.core.host }}:{{ config.core.port }}
-                      </small>
-                    </CCol>
-                  </CRow>
+                  
                 </CForm>
               </CCardBody>
             </CCard>
             <CCard class="text-white bg-primary py-5" style="width: 44%">
               <CCardBody class="text-center">
                 <div>
-                  <h2>AppleJuice neXus</h2>
+                  <h2>appleJuice WebUi</h2>
                   <p class="mb-4">
-                    Die moderne WebUI für Ihren AppleJuice Core. 
+                    Die moderne WebUI für Ihren appleJuice Core. 
                     Verwalten Sie Downloads, Uploads und Shares 
                     bequem über Ihren Browser.
                   </p>
