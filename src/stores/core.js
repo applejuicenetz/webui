@@ -13,9 +13,9 @@ export const useCoreStore = defineStore('core', {
     coreData: {
       timestamp: null,
       server: {
-        name: 'AppleJuice Core',
+        name: 'appleJuice Core',
         ip: '127.0.0.1',
-        description: 'AppleJuice File-Sharing'
+        description: 'appleJuice File-Sharing'
       },
       statistics: {
         downloads: { active: 0, total: 0 },
