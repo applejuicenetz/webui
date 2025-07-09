@@ -32,8 +32,6 @@ RUN npm install --only=production
 COPY --from=build /app/dist ./dist
 COPY server.js ./
 
-COPY start-services.sh ./
-
 # Ports expose
 EXPOSE 3000
 
