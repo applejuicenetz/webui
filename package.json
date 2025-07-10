@@ -1,7 +1,7 @@
 {
   "name": "aj-webui",
   "version": "0.2.2",
-  "description": "The new modern WebUI für P2P AppleJuice Core",
+  "description": "The new modern WebUI für P2P appleJuice Core",
   "repository": {
     "type": "git",
     "url": "git@github.com:applejuicenetz/webui.git"
