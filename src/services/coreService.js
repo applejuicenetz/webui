@@ -128,10 +128,21 @@ class CoreService {
     }
 
     try {
-      // Use the separate proxy server on port 3001
+      // Use the main server proxy
       const proxyHost = window.location.hostname || 'localhost'
-      const proxyPort = '3001'
-      const url = new URL(`${this.apiUrl}/${endpoint}`, `http://${proxyHost}:${proxyPort}`)
+
+      // Check if we're in development mode
+      const isDevelopment = import.meta.env.DEV || window.location.port === '5173'
+
+      let url
+      if (isDevelopment) {
+        // Development: Use Vite's proxy
+        url = new URL(`${this.apiUrl}/${type}/${endpoint}`, window.location.origin)
+      } else {
+        // Production: Use WebUI port from environment variable
+        const webuiPort = import.meta.env.VITE_WEBUI_PORT || window.location.port || '3000'
+        url = new URL(`${this.apiUrl}/${type}/${endpoint}`, `http://${proxyHost}:${webuiPort}`)
+      }
 
       // Passwort hinzufügen
       url.searchParams.append('password', authStore.corePassword)
@@ -141,7 +152,18 @@ class CoreService {
         url.searchParams.append(key, value)
       })
 
-      console.log(`[CORE] Requesting: ${url.pathname}${url.search}`)
+      console.log(`[CORE] Requesting: ${url.toString()}`)
+      console.log(`[CORE] Type: ${type}, Endpoint: ${endpoint}`)
+      console.log(`[CORE] Window location: ${window.location.href}`)
+      console.log(`[CORE] IsDevelopment: ${isDevelopment}`)
+      console.log(`[CORE] VITE_WEBUI_PORT: ${import.meta.env.VITE_WEBUI_PORT}`)
+      console.log(`[CORE] Window port: ${window.location.port}`)
+      console.log(`[CORE] Final URL should be: /${type}/${endpoint}`)
+
+      // Warnung wenn die URL-Pfade nicht erwartungsgemäß sind
+      if (!url.pathname.includes(`/${type}/`)) {
+        console.warn(`[CORE] URL path doesn't contain expected type: ${url.pathname}`)
+      }
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -152,7 +174,32 @@ class CoreService {
         timeout: config.core.timeout
       })
 
+      // Spezielle Behandlung für 302-Redirects
+      if (response.status === 302) {
+        const location = response.headers.get('Location')
+        console.error(`[CORE] 302 Redirect detected:`, {
+          url: url.toString(),
+          location: location,
+          status: response.status,
+          statusText: response.statusText
+        })
+
+        // Wahrscheinlich Authentifizierungsproblem
+        if (location && location.includes('login')) {
+          authStore.logout()
+          throw new Error('Authentication failed: Redirected to login page')
+        }
+
+        throw new Error(`HTTP 302: Redirect to ${location || 'unknown location'}`)
+      }
+
       if (!response.ok) {
+        console.error(`[CORE] HTTP Error:`, {
+          url: url.toString(),
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries())
+        })
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
@@ -908,6 +955,166 @@ class CoreService {
    */
   clearCache() {
     this.cache.clear()
+  }
+
+  /**
+   * Function-Kommando ausführen (für Einstellungen ändern)
+   * @param {string} endpoint - Endpoint (z.B. setNickname)
+   * @param {Object} params - Parameter
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async functionCommand(endpoint, params = {}) {
+    return await this.command('function', endpoint, params)
+  }
+
+  /**
+   * XML-Daten abrufen
+   * @param {string} endpoint - Endpoint (z.B. information.xml)
+   * @param {Object} params - Parameter
+   * @returns {Promise<Object>} - Promise mit XML-Daten
+   */
+  async xmlCommand(endpoint, params = {}) {
+    return await this.command('xml', endpoint, params)
+  }
+
+  /**
+   * Einstellungen ändern
+   * @param {string} setting - Einstellung (z.B. 'nickname')
+   * @param {string} value - Neuer Wert
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async setSetting(setting, value) {
+    return await this.functionCommand('set' + setting.charAt(0).toUpperCase() + setting.slice(1), { value })
+  }
+
+  /**
+   * Nickname ändern
+   * @param {string} nickname - Neuer Nickname
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async setNickname(nickname) {
+    return await this.functionCommand('setNickname', { nickname })
+  }
+
+  /**
+   * Download starten
+   * @param {string} link - Download-Link
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async startDownload(link) {
+    return await this.functionCommand('startDownload', { link })
+  }
+
+  /**
+   * Download stoppen
+   * @param {string} id - Download-ID
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async stopDownload(id) {
+    return await this.functionCommand('stopDownload', { id })
+  }
+
+  /**
+   * Share hinzufügen
+   * @param {string} path - Pfad zum Share
+   * @param {string} name - Name des Shares
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async addShare(path, name) {
+    return await this.functionCommand('addShare', { path, name })
+  }
+
+  /**
+   * Share entfernen
+   * @param {string} id - Share-ID
+   * @returns {Promise<Object>} - Promise mit Antwort
+   */
+  async removeShare(id) {
+    return await this.functionCommand('removeShare', { id })
+  }
+
+  /**
+   * Test-Methode für verschiedene Typen
+   * @returns {Promise<Object>} - Promise mit Test-Ergebnissen
+   */
+  async testDifferentTypes() {
+    console.log('[CORE] Testing different endpoint types...')
+
+    try {
+      // XML-Endpoint testen
+      const xmlResult = await this.xmlCommand('information.xml')
+      console.log('[CORE] XML test successful')
+
+      // Function-Endpoint testen (beispielsweise)
+      // const functionResult = await this.functionCommand('getStatus')
+      // console.log('[CORE] Function test successful')
+
+      return {
+        xml: xmlResult,
+        // function: functionResult,
+        success: true
+      }
+    } catch (error) {
+      console.error('[CORE] Test failed:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+  }
+
+  /**
+   * Direkte Verbindung zum Core testen (ohne Proxy)
+   * @returns {Promise<Object>} - Promise mit Test-Ergebnissen
+   */
+  async testDirectConnection() {
+    console.log('[CORE] Testing direct connection to core...')
+
+    try {
+      const coreHost = import.meta.env.VITE_AJ_CORE_HOST || '192.168.178.222'
+      const corePort = import.meta.env.VITE_AJ_CORE_PORT || '9854'
+      const password = authStore.corePassword
+
+      if (!password) {
+        throw new Error('No password configured')
+      }
+
+      const directUrl = `http://${coreHost}:${corePort}/xml/information.xml?password=${password}`
+      console.log(`[CORE] Direct URL: ${directUrl}`)
+
+      const response = await fetch(directUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/xml, text/xml, */*',
+          'Cache-Control': 'no-cache'
+        },
+        mode: 'cors'
+      })
+
+      console.log(`[CORE] Direct response status: ${response.status}`)
+      console.log(`[CORE] Direct response headers:`, Object.fromEntries(response.headers.entries()))
+
+      if (response.status === 302) {
+        const location = response.headers.get('Location')
+        console.error(`[CORE] Direct 302 redirect to: ${location}`)
+        throw new Error(`Direct connection redirected to: ${location}`)
+      }
+
+      const data = await response.text()
+      console.log(`[CORE] Direct response data (first 200 chars):`, data.substring(0, 200))
+
+      return {
+        success: true,
+        status: response.status,
+        data: data.substring(0, 200)
+      }
+    } catch (error) {
+      console.error('[CORE] Direct test failed:', error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
   }
 }
 

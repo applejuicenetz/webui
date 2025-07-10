@@ -38,6 +38,7 @@ RUN chmod +x ./scripts/update.sh
 
 # Umgebungsvariablen
 ENV DISABLE_AUTO_UPDATE=false
+ENV VITE_WEBUI_PORT=3000
 
 # Ports expose
 EXPOSE 3000

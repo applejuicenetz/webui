@@ -8,8 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Default AppleJuice Core settings
-let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.1.1';
-let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9851';
+let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.178.222';
+let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9854';
 
 console.log(`[START] Starting appleJuice WebUi Server on port ${PORT}`);
 console.log(`[PROXY] Proxying API requests to: http://${CORE_HOST}:${CORE_PORT}`);
@@ -23,7 +23,7 @@ function createDynamicProxy() {
     target: `http://${CORE_HOST}:${CORE_PORT}`,
     changeOrigin: true,
     pathRewrite: {
-      '^/api': '', // /api/xml/settings.xml wird zu /xml/settings.xml
+      '^/api': '', // /api/xml/settings.xml wird zu /xml/settings.xml, /api/function/... wird zu /function/...
     },
     onProxyReq: (proxyReq, req, res) => {
       console.log(`[PROXY] ${req.method} ${req.url} -> http://${CORE_HOST}:${CORE_PORT}${req.url.replace('/api', '')}`);
@@ -76,6 +76,19 @@ app.use('/api', (req, res, next) => {
       const statusCode = statusMatch ? parseInt(statusMatch[1]) : 500;
 
       console.log(`[OK] Raw Response: ${statusCode} for ${req.url}`);
+
+      // Spezielle Behandlung für 302-Redirects
+      if (statusCode === 302) {
+        const locationMatch = responseData.match(/Location: (.+)/i);
+        const location = locationMatch ? locationMatch[1].trim() : 'unknown';
+        console.error(`[PROXY] 302 Redirect detected: ${req.url} -> ${location}`);
+        console.error(`[PROXY] Full response:`, responseData.substring(0, 500));
+
+        // Prüfe ob es ein Authentifizierungsproblem ist
+        if (location.includes('login') || location.includes('auth')) {
+          console.error(`[PROXY] Authentication issue detected!`);
+        }
+      }
 
       // Set CORS headers
       res.setHeader('Access-Control-Allow-Origin', '*');
