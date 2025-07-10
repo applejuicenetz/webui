@@ -3,13 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Vue 3](https://img.shields.io/badge/Vue-3-brightgreen.svg?style=flat-square)](https://vuejs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg?style=flat-square)](https://nodejs.org/)
-[![Node.js](https://img.shields.io/badge/.svg?style=flat-square)](https://.org/)
 
 ![](https://img.shields.io/github/release/applejuicenetz/webui.svg)
-
-![](https://github.com/applejuicenetz/phpgui/actions/workflows/container.yml/badge.svg)
-![](https://img.shields.io/docker/pulls/applejuicenetz/phpgui)
-![](https://img.shields.io/docker/image-size/applejuicenetz/phpgui)
+![](https://img.shields.io/docker/image-size/applejuicenetz/webui)
 
 **Die moderne WebUI für appleJuice Core** - Eine benutzerfreundliche Weboberfläche für das appleJuice P2P-Netzwerk.
 
