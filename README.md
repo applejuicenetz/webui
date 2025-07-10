@@ -6,7 +6,7 @@
 
 **Die moderne WebUI für appleJuice Core** - Eine benutzerfreundliche Weboberfläche für das appleJuice P2P-Netzwerk.
 
-appleJuice Nexus ist eine moderne, responsive Web-Anwendung, die als grafische Benutzeroberfläche für appleJuice Core dient. Sie ermöglicht es Benutzern, ihre appleJuice-Instanz über einen Webbrowser zu verwalten und zu überwachen.
+appleJuice WebUI ist eine moderne, responsive Web-Anwendung, die als grafische Benutzeroberfläche für appleJuice Core dient. Sie ermöglicht es Benutzern, ihre appleJuice-Instanz über einen Webbrowser zu verwalten und zu überwachen.
 
 ## ✨ Features
 
