@@ -5,9 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg?style=flat-square)](https://nodejs.org/)
 [![Node.js](https://img.shields.io/badge/.svg?style=flat-square)](https://.org/)
 
-![](https://img.shields.io/github/release/applejuicenetz/phpgui.svg)
-![](https://img.shields.io/github/downloads/applejuicenetz/phpgui/total)
-![](https://img.shields.io/github/license/applejuicenetz/phpgui.svg)
+![](https://img.shields.io/github/release/applejuicenetz/webui.svg)
 
 ![](https://github.com/applejuicenetz/phpgui/actions/workflows/container.yml/badge.svg)
 ![](https://img.shields.io/docker/pulls/applejuicenetz/phpgui)
