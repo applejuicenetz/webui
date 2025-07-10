@@ -5,7 +5,7 @@
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg?style=flat-square)](https://nodejs.org/)
 
 ![](https://img.shields.io/github/release/applejuicenetz/webui.svg)
-![](https://img.shields.io/docker/image-size/applejuicenetz/webui)
+![](https://img.shields.io/github/image-size/applejuicenetz/webui)
 
 **Die moderne WebUI für appleJuice Core** - Eine benutzerfreundliche Weboberfläche für das appleJuice P2P-Netzwerk.
 
