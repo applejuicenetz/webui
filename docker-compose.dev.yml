@@ -11,7 +11,7 @@ services:
       - "5173:5173"  # Vite Development Server
       - "3000:3000"  # Backup/Admin Server
     volumes:
-      - /mnt/volume1/hs-webspace/www/aj-webui:/app
+      - /verzeichnis/ui:/app
       - /app/node_modules
       - /app/.vite  # Vite cache ausschließen
     environment:
