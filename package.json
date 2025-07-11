@@ -16,7 +16,6 @@
     "preview": "vite preview",
     "serve": "node server.js",
     "start": "NODE_ENV=production node server.js",
-    "proxy": "node simple-proxy-cjs.js",
     "start:all": "npm run start",
     "start:dev": "npm run start",
     "docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
