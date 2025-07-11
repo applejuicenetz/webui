@@ -8,8 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Default AppleJuice Core settings
-let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.178.222';
-let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9854';
+let CORE_HOST = process.env.VITE_AJ_CORE_HOST || process.env.APPLEJUICE_CORE_HOST || '192.168.178.100';
+let CORE_PORT = process.env.VITE_AJ_CORE_PORT || process.env.APPLEJUICE_CORE_PORT || '9851';
 
 console.log(`[START] Starting appleJuice WebUi Server on port ${PORT}`);
 console.log(`[PROXY] Proxying API requests to: http://${CORE_HOST}:${CORE_PORT}`);
@@ -40,7 +40,7 @@ function createDynamicProxy() {
       console.error(`[ERROR] Proxy Error: ${err.message}`);
       res.status(500).json({
         error: 'Proxy Error',
-        message: 'Kann nicht mit AppleJuice Core verbinden',
+        message: 'Can not connect to appleJuice Core',
         details: err.message
       });
     }
@@ -415,7 +415,7 @@ app.post('/update', (req, res) => {
 
 // Server starten
 app.listen(PORT, () => {
-  console.log(`[OK] Server läuft auf http://localhost:${PORT}`);
+  console.log(`[OK] Server run at http://localhost:${PORT}`);
   console.log(`[STATUS] Status: http://localhost:${PORT}/status`);
   console.log(`[API] API Proxy: http://localhost:${PORT}/api/*`);
   console.log(`[PROXY] Special Proxy: http://localhost:${PORT}/proxy/*`);
@@ -423,11 +423,11 @@ app.listen(PORT, () => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('[SHUTDOWN] Server wird beendet...');
+  console.log('[SHUTDOWN] Server is shutting down');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('[SHUTDOWN] Server wird beendet...');
+  console.log('[SHUTDOWN] Server is shutting down');
   process.exit(0);
 });
