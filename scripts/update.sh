@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Update-Skript für AppleJuice WebUI
+# Update-Skript für appleJuice WebUI
 # Dieses Skript lädt die neueste Version von GitHub herunter und aktualisiert die Installation
 
 # Logging-Funktion
