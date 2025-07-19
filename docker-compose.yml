@@ -1,17 +1,25 @@
+version: '3.8'
+
 services:
   aj-webui:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile.fast
+      # Für vollständigen Build: dockerfile: Dockerfile
     container_name: aj-webui
     network_mode: bridge
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - VITE_AJ_CORE_HOST=192.168.178.222
-      - VITE_AJ_CORE_PORT=9854
-      - VITE_WEBUI_PORT=3000
       - PORT=3000
-      - DISABLE_AUTO_UPDATE=false # Auf 'true' setzen, um automatische Updates zu deaktivieren
+      - VITE_PROXY_PORT=3000
+      - VITE_CORE_HOST=localhost
+      - VITE_CORE_PORT=9851
+      - VITE_TEST_MODE=false
+      - VITE_REMEMBER_CREDENTIALS=true
+      - VITE_SHOW_TEST_CREDENTIALS=false
+      - SESSION_SECRET=change-this-in-production-to-a-secure-random-string
     restart: unless-stopped
     command:
       - npm

@@ -1,51 +1,58 @@
-# Multi-stage build für AppleJuice Nexus
+# Multi-stage build für optimale Image-Größe
+FROM node:22-alpine AS builder
 
-# Build stage
-FROM node:18-alpine AS build
-
+# Arbeitsverzeichnis setzen
 WORKDIR /app
 
-# Package files kopieren
+# Package-Dateien kopieren (für besseres Caching)
 COPY package*.json ./
 
-# Dependencies installieren
-RUN npm install
+# Dependencies installieren (inkl. devDependencies für Build)
+# Optimierungen: --prefer-offline, --no-audit, --no-fund für schnellere Installation
+RUN npm ci --silent --prefer-offline --no-audit --no-fund
 
-# Source code kopieren
+# Quellcode kopieren
 COPY . .
 
-# App builden
+# Build mit optimierten Einstellungen
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine AS production
+# Production Stage
+FROM node:22-alpine AS production
 
+# Arbeitsverzeichnis setzen
 WORKDIR /app
 
-# Package files kopieren
-COPY package*.json ./
-
 # Nur production dependencies installieren
-RUN npm install --only=production
+COPY package*.json ./
+RUN npm ci --only=production --silent && npm cache clean --force
 
-# Built app und server kopieren
-COPY --from=build /app/dist ./dist
-COPY server.js ./
-COPY scripts ./scripts/
+# Gebaute Anwendung und Server-Dateien kopieren
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server.js ./
+COPY --from=builder /app/.env.example ./.env.example
 
-# Stellen Sie sicher, dass das Update-Skript ausführbar ist
-RUN chmod +x ./scripts/update.sh
+# Non-root User erstellen für Sicherheit
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S applejuice -u 1001
+
+# Ownership ändern
+RUN chown -R applejuice:nodejs /app
+USER applejuice
 
 # Umgebungsvariablen
 ENV DISABLE_AUTO_UPDATE=false
-ENV VITE_WEBUI_PORT=3000
+ENV VITE_AJ_CORE_HOST=http://localhost
+ENV VITE_AJ_CORE_PORT=9851
 
-# Ports expose
+
+# Port freigeben
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/status', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+# Health check hinzufügen
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
-# Services starten (mit Fallback)
+# Anwendung starten
 CMD ["npm", "run", "start"]
