@@ -11,24 +11,24 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('../views/LoginView.vue'),
+      component: () => import('../views/Login.vue'),
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: () => import('../views/DashboardView.vue'),
+      component: () => import('../views/Dashboard.vue'),
       meta: { requiresAuth: true }
     },
     {
       path: '/downloads',
       name: 'downloads',
-      component: () => import('../views/DownloadsView.vue'),
+      component: () => import('../views/Downloads.vue'),
       meta: { requiresAuth: true }
     },
-    {
-      path: '/xml-data',
-      name: 'xml-data',
-      component: () => import('../views/XmlDataView.vue'),
+ {
+      path: '/uploads',
+      name: 'uploads',
+      component: () => import('../views/Uploads.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -38,12 +38,6 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     // P2P Client Views werden später hinzugefügt
-    {
-      path: '/about',
-      name: 'about',
-      component: () => import('../views/AboutView.vue'),
-      meta: { requiresAuth: true }
-    },
   ],
 })
 

@@ -67,22 +67,6 @@
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link 
-            to="/xml-data"
-            class="nav-link" 
-            :class="{ active: $route.name === 'xml-data' }">
-            <i class="bi bi-file-code me-2"></i>XML-Daten
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link 
-            to="/color-demo"
-            class="nav-link" 
-            :class="{ active: $route.name === 'color-demo' }">
-            <i class="bi bi-palette me-2"></i>Farbschema Demo
-          </router-link>
-        </li>
-        <li class="nav-item">
           <a 
             href="https://applejuicenetz.github.io/faq/"
             target="_blank"

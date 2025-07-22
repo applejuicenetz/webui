@@ -1,5 +1,5 @@
 <template>
-  <AppLayout title="Dashboard v2">
+  <AppLayout title="Downloads">
     <div class="container-fluid py-4">
       <!-- Download Status Cards -->
       <div class="row g-3 mb-4">
