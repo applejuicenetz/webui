@@ -13,7 +13,8 @@ dist
 dist-ssr
 coverage
 *.local
-
+docker-compose.dev.yml
+dev-Dockerfile
 # Environment files
 .env.local
 .env.production
