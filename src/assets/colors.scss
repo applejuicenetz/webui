@@ -1,11 +1,9 @@
-// CoreUI Color Scheme - Light and Dark Theme
-// Based on CoreUI design system colors
-
+// Light and Dark Theme
 // ============================================================================
 // LIGHT THEME COLORS
 // ============================================================================
 :root {
-  // Primary Colors (CoreUI Blue)
+  // Primary Colors (Blue)
   --color-primary: #321fdb;
   --color-primary-rgb: 50, 31, 219;
   --color-primary-hover: #2819c7;
@@ -13,7 +11,7 @@
   --color-primary-light: #e8e6ff;
   --color-primary-dark: #1a0d9f;
 
-  // Success Colors (CoreUI Green)
+  // Success Colors (Green)
   --color-success: #2eb85c;
   --color-success-rgb: 46, 184, 92;
   --color-success-hover: #28a745;
@@ -21,7 +19,7 @@
   --color-success-light: #d4edda;
   --color-success-dark: #155724;
 
-  // Warning Colors (CoreUI Orange)
+  // Warning Colors (Orange)
   --color-warning: #f9b115;
   --color-warning-rgb: 249, 177, 21;
   --color-warning-hover: #e0a800;
@@ -29,7 +27,7 @@
   --color-warning-light: #fff3cd;
   --color-warning-dark: #856404;
 
-  // Danger Colors (CoreUI Red)
+  // Danger Colors (Red)
   --color-danger: #e55353;
   --color-danger-rgb: 229, 83, 83;
   --color-danger-hover: #dc3545;
@@ -37,7 +35,7 @@
   --color-danger-light: #f8d7da;
   --color-danger-dark: #721c24;
 
-  // Info Colors (CoreUI Cyan)
+  // Info Colors (Cyan)
   --color-info: #39f;
   --color-info-rgb: 51, 153, 255;
   --color-info-hover: #2196f3;
@@ -74,7 +72,7 @@
 // DARK THEME COLORS
 // ============================================================================
 [data-theme="dark"] {
-  // Primary Colors (CoreUI Blue - adjusted for dark theme)
+  // Primary Colors (Blue)
   --color-primary: #5856eb;
   --color-primary-rgb: 88, 86, 235;
   --color-primary-hover: #6c63ff;
@@ -82,7 +80,7 @@
   --color-primary-light: #2a2d3a;
   --color-primary-dark: #7c7cff;
 
-  // Success Colors (CoreUI Green - adjusted for dark theme)
+  // Success Colors (Green)
   --color-success: #2eb85c;
   --color-success-rgb: 46, 184, 92;
   --color-success-hover: #3dd365;
@@ -90,7 +88,7 @@
   --color-success-light: #1e2f23;
   --color-success-dark: #4fd675;
 
-  // Warning Colors (CoreUI Orange - adjusted for dark theme)
+  // Warning Colors (Orange)
   --color-warning: #f9b115;
   --color-warning-rgb: 249, 177, 21;
   --color-warning-hover: #ffc107;
@@ -98,7 +96,7 @@
   --color-warning-light: #332b1f;
   --color-warning-dark: #ffcd39;
 
-  // Danger Colors (CoreUI Red - adjusted for dark theme)
+  // Danger Colors (Red)
   --color-danger: #e55353;
   --color-danger-rgb: 229, 83, 83;
   --color-danger-hover: #ff6b6b;
@@ -106,7 +104,7 @@
   --color-danger-light: #2f1f1f;
   --color-danger-dark: #ff7979;
 
-  // Info Colors (CoreUI Cyan - adjusted for dark theme)
+  // Info Colors (Cyan)
   --color-info: #39f;
   --color-info-rgb: 51, 153, 255;
   --color-info-hover: #5dade2;

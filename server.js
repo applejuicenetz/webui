@@ -473,7 +473,7 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server läuft auf Port ${PORT}`);
-  console.log(`📁 Statische Dateien werden aus './dist' ausgeliefert`);
-  console.log(`🔗 Proxy-Endpunkte verfügbar unter '/api/proxy/:type/:file'`);
+  console.log(`Server läuft auf Port ${PORT}`);
+  console.log(`Statische Dateien werden aus './dist' ausgeliefert`);
+  console.log(`Proxy-Endpunkte verfügbar unter '/api/proxy/:type/:file'`);
 });

@@ -4,14 +4,14 @@ Eine moderne, responsive Web-Anwendung mit Vue 3, TypeScript, Bootstrap 5 und Pi
 
 ## ✨ Features
 
-- 🔐 **Sichere Authentifizierung** - Login mit Demo-Accounts
+- 🔐 **Sichere Authentifizierung** 
 - 📊 **Dashboard** - Übersichtliches Dashboard mit Statistiken
 - 🎨 **Modernes Design** - Bootstrap 5 mit gradientem Farbschema
 - 📱 **Responsive** - Optimiert für alle Bildschirmgrößen
 - 🔔 **Benachrichtigungen** - Elegant mit SweetAlert2
 - 🗂️ **State Management** - Mit Pinia für bessere Datenverwaltung
 - 🌍 **Deutsche Lokalisation** - Vollständig auf Deutsch
-- 🎯 **Bootstrap Icons** - Moderne Icon-Bibliothek integriert
+- 🎯 **FontAwesome Icons** - Moderne Icon-Bibliothek integriert
 - 📐 **Optimierte Layouts** - Verbesserte Seitenverhältnisse für bessere UX
 
 
@@ -50,15 +50,9 @@ src/
 
 ## 🎨 Design System
 
-### Farbschema
-- **Primär:** Gradient von Blau (#667eea) zu Lila (#764ba2)
-- **Erfolg:** Bootstrap Grün
-- **Warnung:** Bootstrap Gelb
-- **Fehler:** Bootstrap Rot
-
 ### Komponenten
 - Alle Komponenten nutzen Bootstrap 5 Klassen
-- Custom CSS für Gradients und Animationen
+- Custom CSS für Animationen
 - Responsive Design mit Bootstrap Grid
 
 ## 🛡️ Sicherheit
@@ -75,7 +69,7 @@ src/
 
 ## 🔄 Workflow
 
-1. **Login** - Benutzer meldet sich mit Demo-Daten an
+1. **Login**
 2. **Redirect** - Automatische Weiterleitung zum Dashboard
 3. **Navigation** - Zugriff auf verschiedene Bereiche über Sidebar
 4. **Logout** - Sichere Abmeldung mit Bestätigung
