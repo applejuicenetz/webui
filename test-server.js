@@ -100,10 +100,10 @@ app.use('*', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Test Core-Server läuft auf Port ${PORT}`);
-  console.log(`Test-Passwort: "test" (MD5: ${validPasswordHash})`);
-  console.log(`Test-URL: http://localhost:${PORT}`);
-  console.log(` Verfügbare Endpunkte:`);
+  console.log(`🧪 Test Core-Server läuft auf Port ${PORT}`);
+  console.log(`📝 Test-Passwort: "test" (MD5: ${validPasswordHash})`);
+  console.log(`🔗 Test-URL: http://localhost:${PORT}`);
+  console.log(`⚡ Verfügbare Endpunkte:`);
   console.log(`   - GET /xml/settings.xml?password=HASH`);
   console.log(`   - GET /xml/information.xml?password=HASH`);
   console.log(`   - GET /xml/downloads.xml?password=HASH`);

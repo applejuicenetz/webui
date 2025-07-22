@@ -31,7 +31,5 @@ coverage
 *.njsproj
 *.sln
 *.sw?
-.gitconfig
-.profile
 
 *.tsbuildinfo

@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <nav class="navbar navbar-expand-lg navbar-dark app-header">
     <div class="container-fluid">
       <a class="navbar-brand d-flex align-items-center" href="#">
         <i class="bi bi-apple me-2"></i>
@@ -17,6 +17,9 @@
       
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
+          <li class="nav-item me-2">
+            <ThemeToggle />
+          </li>
           <li class="nav-item dropdown">
             <a
               class="nav-link dropdown-toggle d-flex align-items-center"
@@ -56,6 +59,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import ThemeToggle from './ThemeToggle.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -75,7 +79,48 @@ const handleLogout = async () => {
   font-size: 1.25rem;
 }
 
-.bg-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+.app-header {
+  background-color: var(--color-header-bg);
+  border-bottom: 1px solid var(--color-border);
+  box-shadow: var(--box-shadow);
+}
+
+.app-header .navbar-brand {
+  color: var(--color-primary) !important;
+}
+
+.app-header .nav-link {
+  color: var(--color-text-primary) !important;
+}
+
+.app-header .nav-link:hover {
+  color: var(--color-primary) !important;
+}
+
+.app-header .dropdown-menu {
+  background-color: var(--color-card-bg);
+  border-color: var(--color-border);
+  box-shadow: var(--box-shadow-lg);
+}
+
+.app-header .dropdown-item {
+  color: var(--color-text-primary);
+}
+
+.app-header .dropdown-item:hover {
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.app-header .navbar-toggler {
+  border-color: var(--color-border);
+}
+
+.app-header .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2868, 71, 106, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+[data-theme="dark"] .app-header .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28200, 211, 240, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 </style>

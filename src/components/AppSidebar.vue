@@ -1,5 +1,5 @@
 <template>
-  <div class="col-xxl-2 col-xl-2 col-lg-3 col-md-4 bg-light sidebar">
+  <div class="col-xxl-2 col-xl-2 col-lg-3 col-md-4 sidebar">
     <div class="position-sticky pt-3">
       <ul class="nav flex-column">
         <li class="nav-item">
@@ -75,6 +75,14 @@
           </router-link>
         </li>
         <li class="nav-item">
+          <router-link 
+            to="/color-demo"
+            class="nav-link" 
+            :class="{ active: $route.name === 'color-demo' }">
+            <i class="bi bi-palette me-2"></i>Farbschema Demo
+          </router-link>
+        </li>
+        <li class="nav-item">
           <a 
             href="https://applejuicenetz.github.io/faq/"
             target="_blank"
@@ -106,10 +114,13 @@ defineEmits<{
 .sidebar {
   min-height: calc(100vh - 56px);
   padding: 0;
+  background-color: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-border);
+  transition: background-color 0.3s ease;
 }
 
 .nav-link {
-  color: #6c757d !important;
+  color: var(--color-text-secondary) !important;
   transition: all 0.3s ease;
   padding: 0.75rem 1rem;
   margin: 0.25rem 0.5rem;
@@ -118,12 +129,27 @@ defineEmits<{
   display: block;
 }
 
-.nav-link:hover,
+.nav-link:hover {
+  color: var(--color-primary) !important;
+  background-color: var(--color-surface);
+  transform: translateX(4px);
+}
+
 .nav-link.active,
 .router-link-active {
-  color: #007bff !important;
-  background-color: #f8f9fa;
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary-light);
   transform: translateX(4px);
+  font-weight: 600;
+}
+
+.nav-link i {
+  color: inherit;
+}
+
+/* External link styling */
+.nav-link .text-muted {
+  color: var(--color-text-muted) !important;
 }
 
 /* Ultra-wide screen optimizations */
@@ -139,6 +165,8 @@ defineEmits<{
   .sidebar {
     min-height: auto;
     margin-bottom: 1rem;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
   }
   
   .col-xxl-2,

@@ -69,6 +69,12 @@ const pageTitle = computed(() => {
 </script>
 
 <style scoped>
+.app-layout {
+  background-color: var(--color-body-bg);
+  color: var(--color-body-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 /* Main content area improvements */
 .col-xxl-10,
 .col-xl-10,
@@ -76,6 +82,16 @@ const pageTitle = computed(() => {
 .col-md-8 {
   padding-left: 1.5rem;
   padding-right: 1.5rem;
+}
+
+/* Page title styling */
+.h2 {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.border-bottom {
+  border-color: var(--color-border) !important;
 }
 
 /* Ultra-wide screen optimizations */
@@ -122,9 +138,5 @@ const pageTitle = computed(() => {
 .btn-sm {
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
-}
-
-.bg-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 </style>

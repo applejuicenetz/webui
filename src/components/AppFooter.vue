@@ -1,5 +1,5 @@
 <template>
-  <footer class="bg-light py-3 mt-auto">
+  <footer class="app-footer py-3 mt-auto">
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-6">
@@ -22,18 +22,24 @@
 </script>
 
 <style scoped>
-footer {
-  border-top: 1px solid #dee2e6;
-  background-color: #f8f9fa !important;
+.app-footer {
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-footer a {
-  color: #6c757d;
+.app-footer .text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+.app-footer a {
+  color: var(--color-text-secondary);
   transition: color 0.3s ease;
 }
 
-footer a:hover {
-  color: #007bff;
+.app-footer a:hover {
+  color: var(--color-primary);
 }
 
 @media (max-width: 768px) {

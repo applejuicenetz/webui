@@ -31,6 +31,12 @@ const router = createRouter({
       component: () => import('../views/XmlDataView.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/color-demo',
+      name: 'color-demo',
+      component: () => import('../views/ColorDemoView.vue'),
+      meta: { requiresAuth: true }
+    },
     // P2P Client Views werden später hinzugefügt
     {
       path: '/about',
