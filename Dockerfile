@@ -1,5 +1,5 @@
 # Multi-stage build für optimale Image-Größe
-FROM node:22-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Arbeitsverzeichnis setzen
 WORKDIR /app
@@ -19,7 +19,7 @@ ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Production Stage
-FROM node:22-alpine AS production
+FROM node:26-alpine AS production
 
 # Arbeitsverzeichnis setzen
 WORKDIR /app
